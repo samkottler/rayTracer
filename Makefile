@@ -19,18 +19,18 @@ all: $(BINS)
 $(BIN)/%: $(OBJ)/%.o $(OBJS)
 	@echo Linking $@
 	@mkdir -p $(BIN)
-	g++ -o $@ $(OBJS) $(FLAGS) $(CXXFLAGS) $(CLIBS)
+	@g++ -o $@ $(OBJS) $(FLAGS) $(CXXFLAGS) $(CLIBS)
 
 .PRECIOUS: $(OBJ)/%.o
 $(OBJ)/%.o: ./src/%.c
 	@echo Compiling $<
 	@mkdir -p $(OBJ)
-	gcc -MMD -c -o $@ $< $(FLAGS) $(CFLAGS)
+	@gcc -MMD -c -o $@ $< $(FLAGS) $(CFLAGS)
 
 $(OBJ)/%.o: ./src/%.cpp
 	@echo Compiling $<
 	@mkdir -p $(OBJ)
-	g++ -MMD -c -o $@ $< $(FLAGS) $(CXXFLAGS)
+	@g++ -MMD -c -o $@ $< $(FLAGS) $(CXXFLAGS)
 
 .PHONY:clean
 clean:
