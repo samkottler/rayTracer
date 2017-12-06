@@ -49,10 +49,9 @@ public:
 };
 
 class Plane{
-private:
+public:
     Point point;
     Vector<3> normal;
-public:
     Plane(const Point& p, const Vector<3>& n){
 	point = p;
 	normal = n;
@@ -72,10 +71,10 @@ public:
 	int z = (int)(v[2])%2;
 	if (v[0]<0) x=-x;
 	if (v[2]<0) z=-z;
-	int c = (x==z)?0:128;
-	if (v[0]<0)
-	    c = (x==z)?128:0;
-	return (c<<16)+(c<<8) + c;
+	int c = (x==z)?0:255;
+	if ((v[0]<0) != (v[2]<0))
+	    c = (x==z)?255:0;
+	return (c<<16)+(c<<8)+c;
     }
 };
     
@@ -94,8 +93,9 @@ public:
 	double c = center_to_line.dot(center_to_line) - radius*radius;
 	double s = sqrt(b*b - 4*c);
 	double t = (-b - s)/2;
-	if (t<0.000001) t = (-b+s)/2;
-	if (t<0.000001) t = NAN;
+	if (t<0.001) t = (-b+s)/2;
+	if (t<0.001) t = NAN;
+	//cout << t << endl;
 	return line.point + t*line.direction;
     }
 };
