@@ -1,6 +1,11 @@
 #include <cmath>
 #include "Vector.hpp"
 
+struct Material{
+    double ref;
+    bool is_light;
+};
+
 class Point{
 public:
     double x, y, z;
@@ -11,7 +16,7 @@ public:
 	z = z1;
     }
     bool is_valid(){
-	if (isnan(x) || isnan(y) || isnan(z)) return false;
+	if (isnan(x) || isnan(y) || isnan(z) || x==INFINITY || y==INFINITY || z==INFINITY) return false;
 	return true;
     }
     Point operator+ (const Vector<3>& v) const{
@@ -48,20 +53,28 @@ public:
     }
 };
 
-class Plane{
+class Solid{
+public:
+    Material material;
+    virtual Point intersect(const Line& line) const = 0;
+    virtual int color(const Point& p) = 0;
+    virtual Vector<3> normal(const Point& p) = 0;
+};
+
+class Plane: public Solid{
 public:
     Point point;
-    Vector<3> normal;
+    Vector<3> norm;
     Plane(const Point& p, const Vector<3>& n){
 	point = p;
-	normal = n;
-	normal.normalize();
+	norm = n;
+	norm.normalize();
     }
     Point intersect(const Line& line) const{
 	Vector<3> line_to_plane = point - line.point;
-	double t = line_to_plane.dot(normal)/normal.dot(line.direction);
+	double t = line_to_plane.dot(norm)/norm.dot(line.direction);
 	//cout << t << endl;
-	if (t<0) t = NAN;
+	if (t<0.001) t = NAN;
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
@@ -76,9 +89,12 @@ public:
 	    c = (x==z)?255:0;
 	return (c<<16)+(c<<8)+c;
     }
+    Vector<3> normal(const Point& p){
+	return norm;
+    }
 };
     
-class Sphere{
+class Sphere: public Solid{
 public:
     double radius;
     Point center;
@@ -97,5 +113,11 @@ public:
 	if (t<0.001) t = NAN;
 	//cout << t << endl;
 	return line.point + t*line.direction;
+    }
+    int color(const Point& point){
+	return 0xffffff;
+    }
+    Vector<3> normal(const Point& p){
+	return (p-center).normalize();
     }
 };

@@ -4,8 +4,8 @@
 #define SCALE 30
 #define WIDTH 400
 #define HEIGHT 400
-#define SHADOW_SAMPLES 1
-#define PIXEL_SAMPLES 10
+#define SHADOW_SAMPLES 10
+#define PIXEL_SAMPLES 50
 #define DEPTH 3
 
 extern "C" {
