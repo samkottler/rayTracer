@@ -57,7 +57,7 @@ class Solid{
 public:
     Material material;
     virtual Point intersect(const Line& line) const = 0;
-    virtual int color(const Point& p) = 0;
+    virtual int get_color(const Point& p) = 0;
     virtual Vector<3> normal(const Point& p) = 0;
 };
 
@@ -78,7 +78,7 @@ public:
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
-    int color(const Point& p){
+    int get_color(const Point& p){
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
@@ -98,6 +98,7 @@ class Sphere: public Solid{
 public:
     double radius;
     Point center;
+    int color;
     Sphere(const Point& p, double r){
 	center = p;
 	radius = r;
@@ -114,8 +115,8 @@ public:
 	//cout << t << endl;
 	return line.point + t*line.direction;
     }
-    int color(const Point& point){
-	return 0xffffff;
+    int get_color(const Point& point){
+	return color;
     }
     Vector<3> normal(const Point& p){
 	return (p-center).normalize();
