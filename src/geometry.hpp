@@ -4,6 +4,7 @@
 struct Material{
     double ref;
     bool is_light;
+    double scatter_angle;
 };
 
 class Point{

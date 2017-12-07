@@ -6,6 +6,7 @@
 #define HEIGHT 400
 #define SHADOW_SAMPLES 10
 #define PIXEL_SAMPLES 50
+#define SCATTER_SAMPLES 50
 #define DEPTH 3
 
 extern "C" {

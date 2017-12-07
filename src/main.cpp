@@ -16,7 +16,7 @@ Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
 #define NUM_OBJS 5
 Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &table};
 
-int trace(Line& ray, int remaining){
+int trace(const Line& ray, int remaining){
     Point p(INFINITY,INFINITY,INFINITY);// = sphere.intersect(ray);
     int r = 0x87;
     int g = 0xce;
@@ -38,9 +38,41 @@ int trace(Line& ray, int remaining){
     if (p.is_valid()){
 	int c = (r<<16)+(g<<8)+b;
 	if (remaining !=0){
-	    ray.reflect(p, normal);
-	    ray.direction = ray.direction*-1;
-	    c = trace(ray, remaining-1);
+	    int refR = 0, refG=0, refB=0;
+	    Line new_ray = ray;
+	    new_ray.reflect(p, normal);
+	    new_ray.direction = new_ray.direction*-1;
+	    Vector<3> copy = new_ray.direction;
+	    const int num = (mat.scatter_angle==0)?SCATTER_SAMPLES:1; 
+	    for(int i = 0; i< num; i++){
+		Vector<3> v;
+		double theta = (double)rand()/RAND_MAX*mat.scatter_angle;
+		double phi = (double)rand()/RAND_MAX*2*M_PI;
+		v[0] = sin(theta)*cos(phi);
+		v[1] = sin(theta)*sin(phi);
+		v[2] = cos(theta);
+		if (fabs(copy[2] - 1) < 0.0001){
+		    new_ray.direction = v;
+		}
+		else{
+		    theta = acos(copy[2]);
+		    Vector<3> n;
+		    n[0]=0;n[1]=0;n[2]=1;
+		    n=n.cross(copy);
+		    n.normalize();
+		    double sint = sin(theta);
+		    double cost = cos(theta);
+		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
+		}
+		c = trace(new_ray, remaining-1);
+		refR += (c>>16)&0xff;
+		refG += (c>>8)&0xff;
+		refB += (c)&0xff;
+	    }
+	    refR/=num;
+	    refG/=num;
+	    refB/=num;
+	    c = (refR<<16)+(refG<<8)+refB;
 	}
 	int shadows = 0;
 	for(int i = 0; i<SHADOW_SAMPLES; i++){
@@ -60,13 +92,6 @@ int trace(Line& ray, int remaining){
 	}
 	double shadow_percent = 1-(double)shadows/SHADOW_SAMPLES;
 	if (mat.is_light) shadow_percent = 1;
-	/*r = shadow_percent*(1-mat.ref)*r+mat.ref*((c>>16)&0xff);
-	g = shadow_percent*(1-mat.ref)*g+mat.ref*((c>>8)&0xff);
-	b = shadow_percent*(1-mat.ref)*b+mat.ref*(c&0xff);*/
-	/*
-	r = 256*((1-mat.ref)*shadow_percent*pow((double)r/256, 1-mat.ref)+(mat.ref)*pow((double)((c>>16)&0xff)/256, mat.ref));
-	g = 128*(shadow_percent*pow((double)g/256, 1-mat.ref)+pow((double)((c>>8)&0xff)/256, mat.ref));
-	b = 128*(shadow_percent*pow((double)b/256, 1-mat.ref)+pow((double)(c&0xff)/256, mat.ref));*/
 	r = r*((1-mat.ref)*shadow_percent + mat.ref*((c>>16)&0xff)/256);
 	g = g*((1-mat.ref)*shadow_percent + mat.ref*((c>>8)&0xff)/256);
 	b = b*((1-mat.ref)*shadow_percent + mat.ref*((c)&0xff)/256);
@@ -75,15 +100,15 @@ int trace(Line& ray, int remaining){
 }
 
 int main(int argc, char** argv){
-    light_source.material = {0,true};
+    light_source.material = {0,true,0};
     light_source.color = 0xffffff;
-    sphere1.material = {0.9,false};
+    sphere1.material = {0.9,false,0};
     sphere1.color = 0xffa0a0;
-    sphere2.material = {0.9,false};
+    sphere2.material = {0.9,false,0};
     sphere2.color = 0xa0ffa0;
-    sphere3.material = {0.9,false};
+    sphere3.material = {0.9,false,0};
     sphere3.color = 0xa0a0ff;
-    table.material = {0.5,false};
+    table.material = {0.5,false,M_PI/4};
     int img[WIDTH*HEIGHT];
     for (int y = 0; y < HEIGHT; y++){
 	for (int x = 0; x < WIDTH; x++) {

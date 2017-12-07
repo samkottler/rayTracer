@@ -1,4 +1,4 @@
-FLAGS = -Wall
+FLAGS = -Wall -O2
 CFLAGS = -std=gnu11
 CXXFLAGS = -std=gnu++11
 CLIBS = -lm -lpng
