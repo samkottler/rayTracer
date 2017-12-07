@@ -1,7 +1,9 @@
-FLAGS = -Wall -O2
+CC = gcc
+CXX = g++
+FLAGS = -Wall
 CFLAGS = -std=gnu11
 CXXFLAGS = -std=gnu++11
-CLIBS = -lm -lpng
+CLIBS = -lm -lpng -lpthread
 BIN = ./bin
 OBJ = ./obj
 objects = pngUtil.o main.o
@@ -19,18 +21,18 @@ all: $(BINS)
 $(BIN)/%: $(OBJ)/%.o $(OBJS)
 	@echo Linking $@
 	@mkdir -p $(BIN)
-	@g++ -o $@ $(OBJS) $(FLAGS) $(CXXFLAGS) $(CLIBS)
+	@$(CXX) -o $@ $(OBJS) $(FLAGS) $(CXXFLAGS) $(CLIBS)
 
 .PRECIOUS: $(OBJ)/%.o
 $(OBJ)/%.o: ./src/%.c
 	@echo Compiling $<
 	@mkdir -p $(OBJ)
-	@gcc -MMD -c -o $@ $< $(FLAGS) $(CFLAGS)
+	@$(CC) -MMD -c -o $@ $< $(FLAGS) $(CFLAGS)
 
 $(OBJ)/%.o: ./src/%.cpp
 	@echo Compiling $<
 	@mkdir -p $(OBJ)
-	@g++ -MMD -c -o $@ $< $(FLAGS) $(CXXFLAGS)
+	@$(CXX) -MMD -c -o $@ $< $(FLAGS) $(CXXFLAGS)
 
 .PHONY:clean
 clean:

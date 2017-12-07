@@ -16,7 +16,7 @@ public:
 	y = y1;
 	z = z1;
     }
-    bool is_valid(){
+    bool is_valid() const{
 	if (isnan(x) || isnan(y) || isnan(z) || x==INFINITY || y==INFINITY || z==INFINITY) return false;
 	return true;
     }
@@ -58,8 +58,8 @@ class Solid{
 public:
     Material material;
     virtual Point intersect(const Line& line) const = 0;
-    virtual int get_color(const Point& p) = 0;
-    virtual Vector<3> normal(const Point& p) = 0;
+    virtual int get_color(const Point& p) const = 0;
+    virtual Vector<3> normal(const Point& p) const = 0;
 };
 
 class Plane: public Solid{
@@ -74,12 +74,11 @@ public:
     Point intersect(const Line& line) const{
 	Vector<3> line_to_plane = point - line.point;
 	double t = line_to_plane.dot(norm)/norm.dot(line.direction);
-	//cout << t << endl;
 	if (t<0.001) t = NAN;
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& p){
+    int get_color(const Point& p) const{
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
@@ -90,7 +89,7 @@ public:
 	    c = (x==z)?255:0;
 	return (c<<16)+(c<<8)+c;
     }
-    Vector<3> normal(const Point& p){
+    Vector<3> normal(const Point& p) const{
 	return norm;
     }
 };
@@ -116,10 +115,10 @@ public:
 	//cout << t << endl;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& point){
+    int get_color(const Point& point) const{
 	return color;
     }
-    Vector<3> normal(const Point& p){
+    Vector<3> normal(const Point& p) const{
 	return (p-center).normalize();
     }
 };

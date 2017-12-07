@@ -1,5 +1,8 @@
 #include <iostream>
 #include <iomanip>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
 using namespace std;
 
@@ -17,11 +20,11 @@ Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
 Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &table};
 
 int trace(const Line& ray, int remaining){
-    Point p(INFINITY,INFINITY,INFINITY);// = sphere.intersect(ray);
+    Point p(INFINITY,INFINITY,INFINITY);
     int r = 0x87;
     int g = 0xce;
     int b = 0xeb;
-    Material mat;
+    Material mat = {0,0,0};
     Vector<3> normal;
     for(int i = 0; i < NUM_OBJS; i++){
 	Point p0 = objs[i]->intersect(ray);
@@ -99,18 +102,10 @@ int trace(const Line& ray, int remaining){
     return (r<<16)+(g<<8)+b;
 }
 
-int main(int argc, char** argv){
-    light_source.material = {0,true,0};
-    light_source.color = 0xffffff;
-    sphere1.material = {0.9,false,0};
-    sphere1.color = 0xffa0a0;
-    sphere2.material = {0.9,false,0};
-    sphere2.color = 0xa0ffa0;
-    sphere3.material = {0.9,false,0};
-    sphere3.color = 0xa0a0ff;
-    table.material = {0.5,false,M_PI/4};
-    int img[WIDTH*HEIGHT];
-    for (int y = 0; y < HEIGHT; y++){
+int completed = 0;
+mutex completed_lock;
+void do_rays_i(int* img, int num){
+    for (int y = num; y < HEIGHT; y+=NUM_THREADS){
 	for (int x = 0; x < WIDTH; x++) {
 	    int r=0, g=0, b=0;
 	    for (int i = 0; i<PIXEL_SAMPLES; i++){
@@ -127,10 +122,45 @@ int main(int argc, char** argv){
 	    g/=PIXEL_SAMPLES;
 	    b/=PIXEL_SAMPLES;
 	    img[y*WIDTH+x]=(r<<16)+(g<<8) +b;
-	    cout << "\r" << "Progress: " << fixed << setprecision(2) << ((double)((y*WIDTH)+x)/WIDTH/HEIGHT)*100 << "%" << flush;
 	}
+	completed_lock.lock();
+	completed += 1;
+	completed_lock.unlock();
+	if (num==0) cout << "\r" << "Progress: " << fixed << setprecision(2) << ((double)(completed)/HEIGHT)*100 << "%" << flush;
     }
+}
+
+int main(int argc, char** argv){
+    cout << "Scale:          " << SCALE << endl;
+    cout << "Width:          " << WIDTH << endl;
+    cout << "Height:         " << HEIGHT << endl;
+    cout << "Shadow samples: " << SHADOW_SAMPLES << endl;
+    cout << "Pixel samples:  " << PIXEL_SAMPLES << endl;
+    cout << "Threads:        " << NUM_THREADS << endl;
+    light_source.material = {0,true,0};
+    light_source.color = 0xffffff;
+    sphere1.material = {0.9,false,0};
+    sphere1.color = 0xffa0a0;
+    sphere2.material = {0.9,false,0};
+    sphere2.color = 0xa0ffa0;
+    sphere3.material = {0.9,false,0};
+    sphere3.color = 0xa0a0ff;
+    table.material = {0.5,false,0};
+    int img[WIDTH*HEIGHT];
+    thread threads[NUM_THREADS-1];
+    auto start = chrono::system_clock::now();
+    for(int i = 1; i<NUM_THREADS; i++){
+	threads[i-1] = thread(do_rays_i,img,i);
+	//threads[i-1].join();
+    }
+    do_rays_i(img,0);
+    for(int i = 1; i<NUM_THREADS; i++){
+	threads[i-1].join();
+    }
+    auto end = chrono::system_clock::now();
     cout << endl;
+    chrono::duration<double> elapsed = end-start;
+    cout << "Time: " << elapsed.count() << "s" << endl;
     writeImage((char*)"test.png", WIDTH, HEIGHT, img);
     return 0;
 }
