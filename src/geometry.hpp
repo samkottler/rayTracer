@@ -84,9 +84,9 @@ public:
 	int z = (int)(v[2])%2;
 	if (v[0]<0) x=-x;
 	if (v[2]<0) z=-z;
-	int c = (x==z)?0:255;
+	int c = (x==z)?0x7f:0xff;
 	if ((v[0]<0) != (v[2]<0))
-	    c = (x==z)?255:0;
+	    c = (x==z)?0xff:0x7f;
 	return (c<<16)+(c<<8)+c;
     }
     Vector<3> normal(const Point& p) const{

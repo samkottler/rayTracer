@@ -16,9 +16,10 @@ Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
 Sphere sphere3(Point(3,-1,0),1);
+Sphere sphere4(Point(0,2,-6),4);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
-#define NUM_OBJS 5
-Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &table};
+#define NUM_OBJS 6
+Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &sphere4, &table};
 default_random_engine generators[NUM_THREADS];
 
 int trace(const Line& ray, int remaining, int thread_num){
@@ -48,7 +49,7 @@ int trace(const Line& ray, int remaining, int thread_num){
 	    new_ray.reflect(p, normal);
 	    new_ray.direction = new_ray.direction*-1;
 	    Vector<3> copy = new_ray.direction;
-	    const int num = (mat.scatter_angle==0)?SCATTER_SAMPLES:1; 
+	    const int num = (mat.scatter_angle!=0)?SCATTER_SAMPLES:1; 
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
 		double theta = (double)generators[thread_num]()/generators[thread_num].max()*mat.scatter_angle;
@@ -144,6 +145,7 @@ int main(int argc, char** argv){
     cout << "Height:         " << HEIGHT << endl;
     cout << "Shadow samples: " << SHADOW_SAMPLES << endl;
     cout << "Pixel samples:  " << PIXEL_SAMPLES << endl;
+    cout << "Scatter rays:   " << SCATTER_SAMPLES << endl;
     cout << "Threads:        " << NUM_THREADS << endl;
     light_source.material = {0,true,0};
     light_source.color = 0xffffff;
@@ -153,7 +155,9 @@ int main(int argc, char** argv){
     sphere2.color = 0xa0ffa0;
     sphere3.material = {0.9,false,0};
     sphere3.color = 0xa0a0ff;
-    table.material = {0.5,false,0};
+    sphere4.material = {0.7,false,0};
+    sphere4.color = 0xffffff;
+    table.material = {0.5,false,0.1};
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
@@ -169,7 +173,10 @@ int main(int argc, char** argv){
     auto end = chrono::system_clock::now();
     cout << endl;
     chrono::duration<double> elapsed = end-start;
-    cout << "Time: " << elapsed.count() << "s" << endl;
+    double sec = elapsed.count();
+    int min = sec/60;
+    sec = sec - min*60;
+    cout << "Time: " << min << "m" << sec << "s" << endl;
     writeImage((char*)"test.png", WIDTH, HEIGHT, img);
     return 0;
 }
