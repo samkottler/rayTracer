@@ -11,7 +11,7 @@ using namespace std;
 #include "rayTracer.hpp"
 #include "geometry.hpp"
 
-Sphere light_source(Point(10,10,10),3);
+Sphere light_source(Point(-20,20,-20),3);
 Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
@@ -96,7 +96,7 @@ int trace(const Line& ray, int remaining, int thread_num){
 		}
 	    }
 	}
-	double shadow_percent = 1-(double)shadows/SHADOW_SAMPLES;
+	double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
 	if (mat.is_light) shadow_percent = 1;
 	r = r*((1-mat.ref)*shadow_percent + mat.ref*((c>>16)&0xff)/256);
 	g = g*((1-mat.ref)*shadow_percent + mat.ref*((c>>8)&0xff)/256);
@@ -162,7 +162,7 @@ int main(int argc, char** argv){
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
     for(int i = 1; i<NUM_THREADS; i++){
-	generators[i].seed(rand());
+	generators[i].seed(0);
 	threads[i-1] = thread(do_rays_i,img,i);
 	//threads[i-1].join();
     }
