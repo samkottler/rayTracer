@@ -1,11 +1,11 @@
 #ifndef __MY_RAY_TRACER_HPP
 #define __MY_RAY_TRACER_HPP
 
-#define SCALE 15
-#define WIDTH 200
-#define HEIGHT 200
-#define SHADOW_SAMPLES 1
-#define PIXEL_SAMPLES 10
+#define SCALE 30
+#define WIDTH 400
+#define HEIGHT 400
+#define SHADOW_SAMPLES 10
+#define PIXEL_SAMPLES 50
 #define SCATTER_SAMPLES 1
 #define DEPTH 3
 #define NUM_THREADS 4

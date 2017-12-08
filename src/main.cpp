@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <random>
 
 using namespace std;
 
@@ -18,8 +19,9 @@ Sphere sphere3(Point(3,-1,0),1);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
 #define NUM_OBJS 5
 Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &table};
+default_random_engine generators[NUM_THREADS];
 
-int trace(const Line& ray, int remaining){
+int trace(const Line& ray, int remaining, int thread_num){
     Point p(INFINITY,INFINITY,INFINITY);
     int r = 0x87;
     int g = 0xce;
@@ -49,8 +51,8 @@ int trace(const Line& ray, int remaining){
 	    const int num = (mat.scatter_angle==0)?SCATTER_SAMPLES:1; 
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
-		double theta = (double)rand()/RAND_MAX*mat.scatter_angle;
-		double phi = (double)rand()/RAND_MAX*2*M_PI;
+		double theta = (double)generators[thread_num]()/generators[thread_num].max()*mat.scatter_angle;
+		double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
 		v[0] = sin(theta)*cos(phi);
 		v[1] = sin(theta)*sin(phi);
 		v[2] = cos(theta);
@@ -67,7 +69,7 @@ int trace(const Line& ray, int remaining){
 		    double cost = cos(theta);
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
-		c = trace(new_ray, remaining-1);
+		c = trace(new_ray, remaining-1, thread_num);
 		refR += (c>>16)&0xff;
 		refG += (c>>8)&0xff;
 		refB += (c)&0xff;
@@ -79,9 +81,9 @@ int trace(const Line& ray, int remaining){
 	}
 	int shadows = 0;
 	for(int i = 0; i<SHADOW_SAMPLES; i++){
-	    double theta = (double)rand()/RAND_MAX*M_PI;
-	    double phi = (double)rand()/RAND_MAX*2*M_PI;
-	    double r = (double)rand()/RAND_MAX*light_source.radius;
+	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
+	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+	    double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
 	    double x = r*sin(theta)*cos(phi) + light_source.center.x;
 	    double y = r*sin(theta)*sin(phi) + light_source.center.y;
 	    double z = r*cos(theta) + light_source.center.z;
@@ -105,15 +107,16 @@ int trace(const Line& ray, int remaining){
 int completed = 0;
 mutex completed_lock;
 void do_rays_i(int* img, int num){
+    int local_count = 0;
     for (int y = num; y < HEIGHT; y+=NUM_THREADS){
 	for (int x = 0; x < WIDTH; x++) {
 	    int r=0, g=0, b=0;
 	    for (int i = 0; i<PIXEL_SAMPLES; i++){
-		double xShift = (double)rand()/RAND_MAX-0.5;
-		double yShift = (double)rand()/RAND_MAX-0.5;
+		double xShift = (double)generators[num]()/generators[num].max()-0.5;
+		double yShift = (double)generators[num]()/generators[num].max()-0.5;
 		Point pixel((double)(x-WIDTH/2+xShift)/SCALE,(double)(HEIGHT/2-y+yShift)/SCALE,0);
 		Line ray = Line(camera, pixel);
-		int c = trace(ray, DEPTH);
+		int c = trace(ray, DEPTH, num);
 		r += (c>>16)&0xff;
 		g += (c>>8)&0xff;
 		b += c&0xff;
@@ -123,9 +126,14 @@ void do_rays_i(int* img, int num){
 	    b/=PIXEL_SAMPLES;
 	    img[y*WIDTH+x]=(r<<16)+(g<<8) +b;
 	}
-	completed_lock.lock();
-	completed += 1;
-	completed_lock.unlock();
+	if (completed_lock.try_lock()){
+	    completed += local_count +1;
+	    completed_lock.unlock();
+	    local_count = 0;
+	}
+	else{
+	    local_count++;
+	}
 	if (num==0) cout << "\r" << "Progress: " << fixed << setprecision(2) << ((double)(completed)/HEIGHT)*100 << "%" << flush;
     }
 }
@@ -150,6 +158,7 @@ int main(int argc, char** argv){
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
     for(int i = 1; i<NUM_THREADS; i++){
+	generators[i].seed(rand());
 	threads[i-1] = thread(do_rays_i,img,i);
 	//threads[i-1].join();
     }
