@@ -58,7 +58,7 @@ class Solid{
 public:
     Material material;
     virtual Point intersect(const Line& line) const = 0;
-    virtual int get_color(const Point& p) const = 0;
+    virtual Spectrum get_color(const Point& p) const = 0;
     virtual Vector<3> normal(const Point& p) const = 0;
 };
 
@@ -78,16 +78,18 @@ public:
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& p) const{
+    Spectrum get_color(const Point& p) const{
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
 	if (v[0]<0) x=-x;
 	if (v[2]<0) z=-z;
-	int c = (x==z)?0x7f:0xff;
+	Spectrum color;
+	double c = (x==z)?0.1:0.9;
 	if ((v[0]<0) != (v[2]<0))
-	    c = (x==z)?0xff:0x7f;
-	return (c<<16)+(c<<8)+c;
+	    c = (x==z)?0.9:0.1;
+	for (int i = 0; i<440/SPECTRUM_RESOLUTION; i++) color.samples[i] = c;
+	return color;
     }
     Vector<3> normal(const Point& p) const{
 	return norm;
@@ -98,24 +100,22 @@ class Sphere: public Solid{
 public:
     double radius;
     Point center;
-    int color;
+    Spectrum color;
     Sphere(const Point& p, double r){
 	center = p;
 	radius = r;
     };
     Point intersect(const Line& line) const{
 	Vector<3> center_to_line = line.point - center;
-	//cout << "(" << center_to_line[0] << "," << center_to_line[1] << "," << center_to_line[2] << ")" << endl;
  	double b = 2*line.direction.dot(center_to_line);
 	double c = center_to_line.dot(center_to_line) - radius*radius;
 	double s = sqrt(b*b - 4*c);
 	double t = (-b - s)/2;
 	if (t<0.001) t = (-b+s)/2;
 	if (t<0.001) t = NAN;
-	//cout << t << endl;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& point) const{
+    Spectrum get_color(const Point& point) const{
 	return color;
     }
     Vector<3> normal(const Point& p) const{

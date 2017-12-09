@@ -19,11 +19,21 @@ public:
 	y = y1;
 	z = z1;
     }
+    XYZ(){
+	x=y=z=0;
+    }
     RGB to_RGB() const{
-	double r =  2.3706743*x - 0.9000405*y - 0.4706338*z;
-	double g = -0.5138850*x + 1.4253036*y + 0.0885814*z;
-	double b =  0.0052982*x - 0.0146949*y + 1.0093968*z;
-	return RGB(r,g,b);
+	double rgb[3];
+	rgb[0] =  2.3706743*x - 0.9000405*y - 0.4706338*z;
+	rgb[1] = -0.5138850*x + 1.4253036*y + 0.0885814*z;
+	rgb[2] =  0.0052982*x - 0.0146949*y + 1.0093968*z;
+	for(int i  = 0; i< 3; i++){
+	    if (rgb[i]<=0.0031308) rgb[i]*=12.92;
+	    else rgb[i] = 1.055*pow(rgb[i],1/2.4)-0.055;
+	    if (rgb[i]<0) rgb[i] = 0;
+	    if (rgb[i]>1) rgb[i] = 1;
+	}
+	return RGB(rgb[0],rgb[1],rgb[2]);
     }
     void normalize(double n){
 	x/=n;
@@ -45,7 +55,9 @@ public:
 	for(int i= 0; i<440; i++){
 	    getline(file,line);
 	    stringstream ss(line);
-	    ss.ignore(); ss.ignore();
+	    int w;
+	    ss>>w;
+	    ss.ignore();
 	    ss>>x[i]; ss.ignore();
 	    ss>>y[i]; ss.ignore();
 	    ss>>z[i]; ss.ignore();
@@ -69,4 +81,23 @@ public:
 	    samples[i]*=other.samples[i];
 	}
     }
+    void operator*= (double d){
+	for (int i = 0; i< 440/SPECTRUM_RESOLUTION; i++){
+	    samples[i]*=d;
+	}
+    }
+    void operator+= (const Spectrum& other){
+	for (int i = 0; i< 440/SPECTRUM_RESOLUTION; i++){
+	    samples[i]+=other.samples[i];
+	}
+    }
+    void operator/= (double d){
+	for (int i = 0; i< 440/SPECTRUM_RESOLUTION; i++){
+	    samples[i]/=d;
+	}
+    }
 };
+bool Spectrum::initialized = false;
+double Spectrum::x[440];
+double Spectrum::y[440];
+double Spectrum::z[440];
