@@ -4,11 +4,15 @@
 #include <mutex>
 #include <chrono>
 #include <random>
+#include <string>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
 #include "Vector.hpp"
 #include "rayTracer.hpp"
+#include "colors.hpp"
 #include "geometry.hpp"
 
 Sphere light_source(Point(-20,20,-20),3);
@@ -155,7 +159,7 @@ int main(int argc, char** argv){
     sphere2.color = 0xa0ffa0;
     sphere3.material = {0.9,false,0};
     sphere3.color = 0xa0a0ff;
-    sphere4.material = {0.7,false,0};
+    sphere4.material = {0.7,false,0.2};
     sphere4.color = 0xffffff;
     table.material = {0.5,false,0.1};
     int img[WIDTH*HEIGHT];
