@@ -11,7 +11,7 @@ using namespace std;
 #include "rayTracer.hpp"
 #include "geometry.hpp"
 
-Sphere light_source(Point(-20,20,-20),3);
+Sphere light_source(Point(20,20,20),3);
 Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
@@ -27,7 +27,7 @@ int trace(const Line& ray, int remaining, int thread_num){
     int r = 0x87;
     int g = 0xce;
     int b = 0xeb;
-    Material mat = {0,0,0};
+    Material mat = {0,0,0,0,0};
     Vector<3> normal;
     for(int i = 0; i < NUM_OBJS; i++){
 	Point p0 = objs[i]->intersect(ray);
@@ -43,7 +43,7 @@ int trace(const Line& ray, int remaining, int thread_num){
     }
     if (p.is_valid()){
 	int c = (r<<16)+(g<<8)+b;
-	if (remaining !=0){
+	if ((remaining!=0) && (!mat.is_light)){
 	    int refR = 0, refG=0, refB=0;
 	    Line new_ray = ray;
 	    new_ray.reflect(p, normal);
@@ -97,10 +97,17 @@ int trace(const Line& ray, int remaining, int thread_num){
 	    }
 	}
 	double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
-	if (mat.is_light) shadow_percent = 1;
-	r = r*((1-mat.ref)*shadow_percent + mat.ref*((c>>16)&0xff)/256);
-	g = g*((1-mat.ref)*shadow_percent + mat.ref*((c>>8)&0xff)/256);
-	b = b*((1-mat.ref)*shadow_percent + mat.ref*((c)&0xff)/256);
+	Line ref (light_source.center,p);
+	ref.reflect(p,normal);
+	double specular = pow(ray.direction.dot(ref.direction),1);
+	double diffuse = -ref.direction.dot(normal);
+	if (specular<0) specular = 0;
+	if (diffuse<0) diffuse = 0;
+	if (!mat.is_light){
+	    r = r*((1-mat.ref)*((specular*mat.specular+diffuse*mat.diffuse)*shadow_percent*((light_source.color>>16)&0xff)/0xff/*+0.529411*/) + mat.ref*((c>>16)&0xff)/0xff);
+	    g = g*((1-mat.ref)*((specular*mat.specular+diffuse*mat.diffuse)*shadow_percent*((light_source.color>>8)&0xff)/0xff/*+0.807843*/) + mat.ref*((c>>8)&0xff)/0xff);
+	    b = b*((1-mat.ref)*((specular*mat.specular+diffuse*mat.diffuse)*shadow_percent*((light_source.color)&0xff)/0xff/*+0.921568*/) + mat.ref*((c)&0xff)/0xff);
+	}
     }
     return (r<<16)+(g<<8)+b;
 }
@@ -147,17 +154,17 @@ int main(int argc, char** argv){
     cout << "Pixel samples:  " << PIXEL_SAMPLES << endl;
     cout << "Scatter rays:   " << SCATTER_SAMPLES << endl;
     cout << "Threads:        " << NUM_THREADS << endl;
-    light_source.material = {0,true,0};
+    light_source.material = {0,true,0,0,0};
     light_source.color = 0xffffff;
-    sphere1.material = {0.9,false,0};
+    sphere1.material = {0,false,0,0,1};
     sphere1.color = 0xffa0a0;
-    sphere2.material = {0.9,false,0};
+    sphere2.material = {1,false,0,1,0};
     sphere2.color = 0xa0ffa0;
-    sphere3.material = {0.9,false,0};
+    sphere3.material = {0.9,false,0.5,0.9,0.1};
     sphere3.color = 0xa0a0ff;
-    sphere4.material = {0.7,false,0};
+    sphere4.material = {0.5,false,0,0.5,0.5};
     sphere4.color = 0xffffff;
-    table.material = {0.5,false,0.1};
+    table.material = {0.2,false,0.2,0,1};
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();

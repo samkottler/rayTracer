@@ -5,6 +5,8 @@ struct Material{
     double ref;
     bool is_light;
     double scatter_angle;
+    double specular;
+    double diffuse;
 };
 
 class Point{
