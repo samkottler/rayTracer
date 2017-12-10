@@ -6,7 +6,7 @@
 #define HEIGHT 400
 #define SHADOW_SAMPLES 10
 #define PIXEL_SAMPLES 50
-#define SCATTER_SAMPLES 4
+#define SCATTER_SAMPLES 2
 #define DEPTH 10
 #define NUM_THREADS 4
 

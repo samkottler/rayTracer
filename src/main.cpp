@@ -17,12 +17,15 @@ Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
 Sphere sphere3(Point(3,-1,0),1);
 Sphere sphere4(Point(0,2,-6),4);
+Sphere sphere5(Point(0,13,-30),15);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
-#define NUM_OBJS 6
-Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &sphere4, &table};
+#define NUM_OBJS 7
+Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};
 default_random_engine generators[NUM_THREADS];
+long num_rays[NUM_THREADS];
 
 int trace(const Line& ray, int remaining, int thread_num){
+    num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     int r = 0x87;
     int g = 0xce;
@@ -43,7 +46,7 @@ int trace(const Line& ray, int remaining, int thread_num){
     }
     if (p.is_valid()){
 	int c = (r<<16)+(g<<8)+b;
-	if ((remaining!=0) && (!mat.is_light)){
+	if ((remaining!=0) && (!mat.is_light) && (mat.ref!=0)){
 	    int refR = 0, refG=0, refB=0;
 	    Line new_ray = ray;
 	    new_ray.reflect(p, normal);
@@ -154,16 +157,20 @@ int main(int argc, char** argv){
     cout << "Pixel samples:  " << PIXEL_SAMPLES << endl;
     cout << "Scatter rays:   " << SCATTER_SAMPLES << endl;
     cout << "Threads:        " << NUM_THREADS << endl;
+    cout << "Depth:          " << DEPTH << endl;
+    cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
     light_source.material = {0,true,0,0,0};
     light_source.color = 0xffffff;
     sphere1.material = {0,false,0,0,1};
     sphere1.color = 0xffa0a0;
     sphere2.material = {1,false,0,1,0};
     sphere2.color = 0xa0ffa0;
-    sphere3.material = {0.9,false,0.5,0.9,0.1};
+    sphere3.material = {0.9,false,0.2,0.9,0.1};
     sphere3.color = 0xa0a0ff;
     sphere4.material = {0.5,false,0,0.5,0.5};
     sphere4.color = 0xffffff;
+    sphere5.material = {0.5,false,0,0.5,0.5};
+    sphere5.color = 0xffff7f;
     table.material = {0.2,false,0.2,0,1};
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
@@ -183,7 +190,12 @@ int main(int argc, char** argv){
     double sec = elapsed.count();
     int min = sec/60;
     sec = sec - min*60;
+    long rays = 0;
+    for (int i = 0; i< NUM_THREADS; i++){
+	rays+= num_rays[i];
+    }
     cout << "Time: " << min << "m" << sec << "s" << endl;
+    cout << "Rays: " << rays << endl;
     writeImage((char*)"test.png", WIDTH, HEIGHT, img);
     return 0;
 }
