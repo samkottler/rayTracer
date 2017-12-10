@@ -52,25 +52,32 @@ int trace(const Line& ray, int remaining, int thread_num){
 	    new_ray.reflect(p, normal);
 	    new_ray.direction = new_ray.direction*-1;
 	    Vector<3> copy = new_ray.direction;
-	    const int num = (mat.scatter_angle!=0)?SCATTER_SAMPLES:1; 
+	    const int num = (mat.scatter_angle!=0)?SCATTER_SAMPLES:1;
+	    double theta = acos(copy[2]);
+	    Vector<3> n;
+	    n[0]=0;n[1]=0;n[2]=1;
+	    n=n.cross(copy);
+	    n.normalize();
+	    double sint = sin(theta);
+	    double cost = cos(theta);
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
-		double theta = (double)generators[thread_num]()/generators[thread_num].max()*mat.scatter_angle;
-		double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-		v[0] = sin(theta)*cos(phi);
-		v[1] = sin(theta)*sin(phi);
-		v[2] = cos(theta);
+		double theta_rand = (double)generators[thread_num]()/generators[thread_num].max()*mat.scatter_angle;
+		double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+		v[0] = sin(theta_rand)*cos(phi_rand);
+		v[1] = sin(theta_rand)*sin(phi_rand);
+		v[2] = cos(theta_rand);
 		if (fabs(copy[2] - 1) < 0.0001){
 		    new_ray.direction = v;
 		}
-		else{
+		else{/*
 		    theta = acos(copy[2]);
 		    Vector<3> n;
 		    n[0]=0;n[1]=0;n[2]=1;
 		    n=n.cross(copy);
 		    n.normalize();
 		    double sint = sin(theta);
-		    double cost = cos(theta);
+		    double cost = cos(theta);*/
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
 		c = trace(new_ray, remaining-1, thread_num);
