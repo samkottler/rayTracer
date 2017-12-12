@@ -1,12 +1,48 @@
 #include <cmath>
 #include "Vector.hpp"
 
+class Color{
+public:
+    double r,g,b;
+    Color(){
+	r = g = b = 0;
+    }
+    Color(double r1, double g1, double b1){
+	r = r1;
+	g = g1;
+	b = b1;
+    }
+    int to_int(double max){
+	int r_int = r*255/max;
+	int g_int = g*255/max;
+	int b_int = b*255/max;
+	if (r_int>255) r_int = 255;
+	if (g_int>255) g_int = 255;
+	if (b_int>255) b_int = 255;
+	return (r_int<<16) + (g_int<<8) + b_int;
+    }
+    Color operator+(const Color& other) const{
+	Color c(r+other.r, g+other.g, b+other.b);
+	return c;
+    }
+    Color operator*(const Color& other) const{
+	Color c(r*other.r, g*other.g, b*other.b);
+	return c;
+    }
+    Color operator/(double num) const{
+	Color c(r/num, g/num, b/num);
+	return c;
+    }
+    Color operator*(double num) const{
+	Color c(r*num, g*num, b*num);
+	return c;
+    }
+};
+
 struct Material{
-    double ref;
+    Color ref;
     bool is_light;
     double scatter_angle;
-    double specular;
-    double diffuse;
 };
 
 class Point{
@@ -60,7 +96,7 @@ class Solid{
 public:
     Material material;
     virtual Point intersect(const Line& line) const = 0;
-    virtual int get_color(const Point& p) const = 0;
+    virtual Color get_color(const Point& p) const = 0;
     virtual Vector<3> normal(const Point& p) const = 0;
 };
 
@@ -80,16 +116,16 @@ public:
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& p) const{
+    Color get_color(const Point& p) const{
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
 	if (v[0]<0) x=-x;
 	if (v[2]<0) z=-z;
-	int c = (x==z)?0x7f:0xff;
+	double c = (x==z)?0.5:1;
 	if ((v[0]<0) != (v[2]<0))
-	    c = (x==z)?0xff:0x7f;
-	return (c<<16)+(c<<8)+c;
+	    c = (x==z)?1:0.5;
+	return Color(c,c,c);
     }
     Vector<3> normal(const Point& p) const{
 	return norm;
@@ -100,7 +136,7 @@ class Sphere: public Solid{
 public:
     double radius;
     Point center;
-    int color;
+    Color color;
     Sphere(const Point& p, double r){
 	center = p;
 	radius = r;
@@ -117,7 +153,7 @@ public:
 	//cout << t << endl;
 	return line.point + t*line.direction;
     }
-    int get_color(const Point& point) const{
+    Color get_color(const Point& point) const{
 	return color;
     }
     Vector<3> normal(const Point& p) const{
