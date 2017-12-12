@@ -13,7 +13,8 @@ using namespace std;
 
 //Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
 Color ambient (0,0,0);
-Sphere light_source(Point(20,20,20),3);
+Sphere light_source1(Point(20,20,20),3);
+Sphere light_source2(Point(-20,20,20),3);
 Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
@@ -21,8 +22,9 @@ Sphere sphere3(Point(3,-1,0),1);
 Sphere sphere4(Point(0,2,-6),4);
 Sphere sphere5(Point(0,13,-30),15);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
-#define NUM_OBJS 7
-Solid* objs[NUM_OBJS] {&light_source, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};
+#define NUM_OBJS 8
+#define NUM_LIGHTS 2
+Solid* objs[NUM_OBJS] {&light_source1, &light_source2, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};
 default_random_engine generators[NUM_THREADS];
 long num_rays[NUM_THREADS];
 #define EXPOSURE 1
@@ -74,31 +76,37 @@ Color trace(const Line& ray, int remaining, int thread_num){
 	    }
 	    ref_color = ref_color/num;
 	}
-	int shadows = 0;
-	for(int i = 0; i<SHADOW_SAMPLES; i++){
-	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
-	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-	    double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
-	    double x = r*sin(theta)*cos(phi) + light_source.center.x;
-	    double y = r*sin(theta)*sin(phi) + light_source.center.y;
-	    double z = r*cos(theta) + light_source.center.z;
-	    Line shadow_ray(p, Point(x,y,z));
-	    for(int j = 1; j < NUM_OBJS; j++){
-		if (objs[j]->intersect(shadow_ray).is_valid()){
-		    shadows++;
-		    break;
+	Color to_return = ref_color*mat.ref;
+	for(int k = 0; k< NUM_LIGHTS; k++){
+	    Sphere light_source = *((Sphere*)objs[k]);
+	    int shadows = 0;
+	    for(int i = 0; i<SHADOW_SAMPLES; i++){
+		double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
+		double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+		double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
+		double x = r*sin(theta)*cos(phi) + light_source.center.x;
+		double y = r*sin(theta)*sin(phi) + light_source.center.y;
+		double z = r*cos(theta) + light_source.center.z;
+		Line shadow_ray(p, Point(x,y,z));
+		for(int j = NUM_LIGHTS; j < NUM_OBJS; j++){
+		    if (objs[j]->intersect(shadow_ray).is_valid()){
+			shadows++;
+			break;
+		    }
 		}
+		
 	    }
+	    double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
+	    if (mat.is_light) return c;
+	    Line ref (light_source.center,p);
+	    ref.reflect(p,normal);
+	    double specular = pow(ray.direction.dot(ref.direction),1);
+	    double diffuse = -ref.direction.dot(normal);
+	    if (specular<0) specular = 0;
+	    if (diffuse<0) diffuse = 0;
+	    to_return = to_return + c*diffuse*shadow_percent;
 	}
-	double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
-	if (mat.is_light) return c;
-	Line ref (light_source.center,p);
-	ref.reflect(p,normal);
-	double specular = pow(ray.direction.dot(ref.direction),1);
-	double diffuse = -ref.direction.dot(normal);
-	if (specular<0) specular = 0;
-	if (diffuse<0) diffuse = 0;
-	c = ref_color*mat.ref+c*diffuse*shadow_percent + c*ambient/8;
+	c = to_return + c*ambient/8;//ref_color*mat.ref+c*diffuse*shadow_percent + c*ambient/8;
     }
     return c;
 }
@@ -147,8 +155,10 @@ int main(int argc, char** argv){
     cout << "Threads:        " << NUM_THREADS << endl;
     cout << "Depth:          " << DEPTH << endl;
     cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
-    light_source.material = {Color(),true,0};
-    light_source.color = Color(1,1,1);
+    light_source1.material = {Color(),true,0};
+    light_source1.color = Color(1,1,1);
+    light_source2.material = {Color(),true,0};
+    light_source2.color = Color(1,1,1);
     sphere1.material = {Color(),false,0};
     sphere1.color = Color(1,0.5,0.5);
     sphere2.material = {Color(1,1,1),false,0};
