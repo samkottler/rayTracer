@@ -37,6 +37,10 @@ public:
 	Color c(r*num, g*num, b*num);
 	return c;
     }
+    bool is_zero() const{
+	if (r < 0.0001 && g < 0.0001 && b < 0.0001) return true;
+	return false;
+    }
 };
 
 struct Material{

@@ -52,7 +52,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     }
     if (p.is_valid()){
 	Color ref_color(0,0,0);
-	if ((remaining!=0) && (!mat.is_light)){
+	if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero()){
 	    Line new_ray = ray;
 	    new_ray.reflect(p, normal);
 	    new_ray.direction = new_ray.direction*-1;
