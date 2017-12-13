@@ -11,10 +11,10 @@ using namespace std;
 #include "rayTracer.hpp"
 #include "geometry.hpp"
 
-//Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
-Color ambient (0,0,0);
-Sphere light_source1(Point(20,20,20),3);
-Sphere light_source2(Point(-20,20,20),3);
+Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
+//Color ambient (0,0,0);
+Sphere light_source1(Point(20,20,20),6);
+Sphere light_source2(Point(-100,100,100),10);
 Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
 Sphere sphere2(Point(0,-1,0),1);
@@ -29,7 +29,13 @@ default_random_engine generators[NUM_THREADS];
 long num_rays[NUM_THREADS];
 #define EXPOSURE 1
 
-Color trace(const Line& ray, int remaining, int thread_num){
+struct Trace_return{
+    Color color;
+    Point point;
+};
+
+
+Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient; //((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
@@ -72,7 +78,11 @@ Color trace(const Line& ray, int remaining, int thread_num){
 		else{
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
-		ref_color = ref_color + trace(new_ray, remaining-1, thread_num);
+		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
+		double dist = (p-deaper.point).length()/10;
+		if (dist<1) dist = 1;
+		if (!deaper.point.is_valid()) dist = 1;
+		ref_color = ref_color + deaper.color/dist/dist;
 	    }
 	    ref_color = ref_color/num;
 	}
@@ -97,18 +107,20 @@ Color trace(const Line& ray, int remaining, int thread_num){
 		
 	    }
 	    double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
-	    if (mat.is_light) return c;
+	    if (mat.is_light) return {c,p};
 	    Line ref (light_source.center,p);
 	    ref.reflect(p,normal);
 	    double specular = pow(ray.direction.dot(ref.direction),1);
 	    double diffuse = -ref.direction.dot(normal);
 	    if (specular<0) specular = 0;
 	    if (diffuse<0) diffuse = 0;
-	    to_return = to_return + c*diffuse*shadow_percent;
+	    double dist = (p-light_source.center).length()/10;
+	    if (dist<1) dist = 1;
+	    to_return = to_return + c*diffuse*shadow_percent*light_source.color/dist/dist;
 	}
 	c = to_return + c*ambient/8;//ref_color*mat.ref+c*diffuse*shadow_percent + c*ambient/8;
     }
-    return c;
+    return {c,p};
 }
 
 int completed = 0;
@@ -123,7 +135,7 @@ void do_rays_i(int* img, int num){
 		double yShift = (double)generators[num]()/generators[num].max()-0.5;
 		Point pixel((double)(x-WIDTH/2+xShift)/SCALE,(double)(HEIGHT/2-y+yShift)/SCALE,0);
 		Line ray = Line(camera, pixel);
-		int c = trace(ray, DEPTH, num).to_int(EXPOSURE);
+		int c = trace(ray, DEPTH, num).color.to_int(EXPOSURE);
 		r += (c>>16)&0xff;
 		g += (c>>8)&0xff;
 		b += c&0xff;
@@ -156,9 +168,9 @@ int main(int argc, char** argv){
     cout << "Depth:          " << DEPTH << endl;
     cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
     light_source1.material = {Color(),true,0};
-    light_source1.color = Color(1,1,1);
+    light_source1.color = Color(10,10,10);
     light_source2.material = {Color(),true,0};
-    light_source2.color = Color(1,1,1);
+    light_source2.color = Color(250,250,250);
     sphere1.material = {Color(),false,0};
     sphere1.color = Color(1,0.5,0.5);
     sphere2.material = {Color(1,1,1),false,0};
