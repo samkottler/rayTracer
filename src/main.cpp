@@ -11,8 +11,8 @@ using namespace std;
 #include "rayTracer.hpp"
 #include "geometry.hpp"
 
-Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
-//Color ambient (0,0,0);
+//Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
+Color ambient (0,0,0);
 Sphere light_source1(Point(20,20,20),6);
 Sphere light_source2(Point(-100,100,100),10);
 Point camera(0,3,10);
@@ -22,9 +22,9 @@ Sphere sphere3(Point(3,-1,0),1);
 Sphere sphere4(Point(0,2,-6),4);
 Sphere sphere5(Point(0,13,-30),15);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
-#define NUM_OBJS 8
-#define NUM_LIGHTS 2
-Solid* objs[NUM_OBJS] {&light_source1, &light_source2, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};
+#define NUM_OBJS 3
+#define NUM_LIGHTS 1
+Solid* objs[NUM_OBJS] {&light_source1, &sphere4, &table};
 default_random_engine generators[NUM_THREADS];
 long num_rays[NUM_THREADS];
 #define EXPOSURE 1
@@ -39,7 +39,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient; //((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
-    Material mat = {Color(),0,0};
+    Material mat = {Color(),0,0,0,0};
     Vector<3> normal;
     for(int i = 0; i < NUM_OBJS; i++){
 	Point p0 = objs[i]->intersect(ray);
@@ -51,6 +51,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	}
     }
     if (p.is_valid()){
+	if (mat.is_light) return {c,p};
 	Color ref_color(0,0,0);
 	if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero()){
 	    Line new_ray = ray;
@@ -58,36 +59,43 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    new_ray.direction = new_ray.direction*-1;
 	    Vector<3> copy = new_ray.direction;
 	    const int num = (mat.scatter_angle!=0)?SCATTER_SAMPLES:1;
-	    double theta = acos(copy[2]);
+	    double theta = acos(normal[2]);
 	    Vector<3> n;
 	    n[0]=0;n[1]=0;n[2]=1;
-	    n=n.cross(copy);
+	    n=n.cross(normal);
 	    n.normalize();
 	    double sint = sin(theta);
 	    double cost = cos(theta);
+	    double total = 0;
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
-		double theta_rand = (double)generators[thread_num]()/generators[thread_num].max()*mat.scatter_angle;
+		double theta_rand = (double)generators[thread_num]()/generators[thread_num].max()*M_PI/2;
 		double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
 		v[0] = sin(theta_rand)*cos(phi_rand);
 		v[1] = sin(theta_rand)*sin(phi_rand);
 		v[2] = cos(theta_rand);
-		if (fabs(copy[2] - 1) < 0.0001){
+		if (fabs(normal[2] - 1) < 0.0001){
 		    new_ray.direction = v;
 		}
 		else{
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
 		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
-		double dist = (p-deaper.point).length()/10;
+		double dist = (p-deaper.point).length()/100;
 		if (dist<1) dist = 1;
 		if (!deaper.point.is_valid()) dist = 1;
-		ref_color = ref_color + deaper.color/dist/dist;
+		double specular = pow(-ray.direction.dot(new_ray.direction),2);
+		double diffuse = new_ray.direction.dot(normal);
+		if (specular<0) specular = 0;
+		if (diffuse<0) diffuse = 0;
+		double intensity = (mat.diffuse*diffuse+mat.specular*specular)/dist/dist;
+		total += intensity;
+		ref_color = ref_color + deaper.color*intensity;
 	    }
-	    ref_color = ref_color/num;
+	    ref_color = ref_color/total;
 	}
-	Color to_return = ref_color*mat.ref;
-	for(int k = 0; k< NUM_LIGHTS; k++){
+	Color to_return = ref_color*c;
+	/*for(int k = 0; k< NUM_LIGHTS; k++){
 	    Sphere light_source = *((Sphere*)objs[k]);
 	    int shadows = 0;
 	    for(int i = 0; i<SHADOW_SAMPLES; i++){
@@ -117,7 +125,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    double dist = (p-light_source.center).length()/10;
 	    if (dist<1) dist = 1;
 	    to_return = to_return + c*diffuse*shadow_percent*light_source.color/dist/dist;
-	}
+	    }*/
 	c = to_return + c*ambient/8;//ref_color*mat.ref+c*diffuse*shadow_percent + c*ambient/8;
     }
     return {c,p};
@@ -168,20 +176,20 @@ int main(int argc, char** argv){
     cout << "Depth:          " << DEPTH << endl;
     cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
     light_source1.material = {Color(),true,0};
-    light_source1.color = Color(10,10,10);
-    light_source2.material = {Color(),true,0};
+    light_source1.color = Color(50,50,50);
+    /*light_source2.material = {Color(),true,0};
     light_source2.color = Color(250,250,250);
     sphere1.material = {Color(),false,0};
     sphere1.color = Color(1,0.5,0.5);
     sphere2.material = {Color(1,1,1),false,0};
     sphere2.color = Color(0.5,1,0.5);
     sphere3.material = {Color(0.5,0.5,0.5),false,M_PI/6};
-    sphere3.color = Color(0.2,0.2,0.4);
-    sphere4.material = {Color(0.9,0.9,0.9),false,0};
-    sphere4.color = Color(0.1,0.1,0.1);
-    sphere5.material = {Color(0.5,0.5,0.5),false,0};
-    sphere5.color = Color(1,1,0.5);
-    table.material = {Color(0.1,0.1,0.1),false,0.1};
+    sphere3.color = Color(0.2,0.2,0.4);*/
+    sphere4.material = {Color(0.9,0.9,0.9),false,M_PI/2,0,1};
+    sphere4.color = Color(1,1,1);
+    /*sphere5.material = {Color(0.5,0.5,0.5),false,0};
+      sphere5.color = Color(1,1,0.5);*/
+    table.material = {Color(0.1,0.1,0.1),false,M_PI,1,0};
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
