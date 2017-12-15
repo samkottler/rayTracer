@@ -1,0 +1,21 @@
+{
+    "shape": "sphere";
+    "center": {20,20,20};
+    "radius": 6;
+    "is_light": true;
+    "color": 0xffffff;
+}
+{
+    "shape": "plane";
+    "point": {0,-2,0};
+    "normal": {0,1,0};
+}
+{
+    "shape": "sphere";
+    "center": {0,4,-6};
+    "radius": 6;
+    "is_light": false;
+    "color": 0;
+    "reflect_color": 0xffffff;
+    "reflection_angle": 0;
+}
