@@ -4,6 +4,8 @@
 #include <mutex>
 #include <chrono>
 #include <random>
+#include <vector>
+#include <string>
 
 using namespace std;
 
@@ -11,9 +13,13 @@ using namespace std;
 #include "rayTracer.hpp"
 #include "geometry.hpp"
 
-Color ambient((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
+vector<Solid*>* read_json_scene(string filename);
+
+Point camera(0,3,10);
+
+Color ambient;//((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
 //Color ambient (0,0,0);
-Sphere light_source1(Point(20,20,20),6);
+/*Sphere light_source1(Point(20,20,20),6);
 Sphere light_source2(Point(-100,100,100),10);
 Point camera(0,3,10);
 Sphere sphere1(Point(-3,-1,0),1);
@@ -24,7 +30,10 @@ Sphere sphere5(Point(0,13,-30),15);
 Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
 #define NUM_OBJS 8
 #define NUM_LIGHTS 2
-Solid* objs[NUM_OBJS] {&light_source1, &light_source2, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};
+Solid* objs[NUM_OBJS] {&light_source1, &light_source2, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};*/
+vector<Solid*> objs;
+int num_objs = 0;
+int num_lights = 0;
 default_random_engine generators[NUM_THREADS];
 long num_rays[NUM_THREADS];
 #define EXPOSURE 1
@@ -41,7 +50,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     Color c = ambient; //((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
     Material mat = {Color(),0,0};
     Vector<3> normal;
-    for(int i = 0; i < NUM_OBJS; i++){
+    for(int i = 0; i < num_objs; i++){
 	Point p0 = objs[i]->intersect(ray);
 	if (p0.is_valid() && ((p-ray.point).length() > (p0-ray.point).length())){
 	    p = p0;
@@ -87,7 +96,8 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    ref_color = ref_color/num;
 	}
 	Color to_return = ref_color*mat.ref;
-	for(int k = 0; k< NUM_LIGHTS; k++){
+	for(int k = 0; k< num_objs; k++){
+	    if (!objs[k]->material.is_light) continue;
 	    Sphere light_source = *((Sphere*)objs[k]);
 	    int shadows = 0;
 	    for(int i = 0; i<SHADOW_SAMPLES; i++){
@@ -98,10 +108,12 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 		double y = r*sin(theta)*sin(phi) + light_source.center.y;
 		double z = r*cos(theta) + light_source.center.z;
 		Line shadow_ray(p, Point(x,y,z));
-		for(int j = NUM_LIGHTS; j < NUM_OBJS; j++){
-		    if (objs[j]->intersect(shadow_ray).is_valid()){
-			shadows++;
-			break;
+		for(int j = 0; j < num_objs; j++){
+		    if (!objs[j]->material.is_light){
+			if (objs[j]->intersect(shadow_ray).is_valid()){
+			    shadows++;
+			    break;
+			}
 		    }
 		}
 		
@@ -167,7 +179,7 @@ int main(int argc, char** argv){
     cout << "Threads:        " << NUM_THREADS << endl;
     cout << "Depth:          " << DEPTH << endl;
     cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
-    light_source1.material = {Color(),true,0};
+    /*light_source1.material = {Color(),true,0};
     light_source1.color = Color(10,10,10);
     light_source2.material = {Color(),true,0};
     light_source2.color = Color(250,250,250);
@@ -181,7 +193,8 @@ int main(int argc, char** argv){
     sphere4.color = Color(0.1,0.1,0.1);
     sphere5.material = {Color(0.5,0.5,0.5),false,0};
     sphere5.color = Color(1,1,0.5);
-    table.material = {Color(0.1,0.1,0.1),false,0.1};
+    table.material = {Color(0.1,0.1,0.1),false,0.1};*/
+    objs=*read_json_scene("scene.json");
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
