@@ -16,14 +16,14 @@
     "point": [0,-2,0],
     "normal": [0,1,0],
     "reflect_color": [0.1,0.1,0.1],
-    "reflection_angle": 0
+    "reflection_angle": 0.1
 }
 {
     "shape": "sphere",
     "center": [0,2,-6],
     "radius": 4,
     "is_light": false,
-    "color": [0,0,0],
+    "color": [0.1,0.1,0.1],
     "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
 }
@@ -50,8 +50,8 @@
     "center": [3,-1,0],
     "radius": 1,
     "is_light": false,
-    "color": [0.2,0.2,4],
-    "reflect_color": [0.9,0.9,0.9],
+    "color": [0.2,0.2,0.4],
+    "reflect_color": [0.5,0.5,0.5],
     "reflection_angle": 0.5
 }
 {

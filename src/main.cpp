@@ -17,20 +17,7 @@ vector<Solid*>* read_json_scene(string filename);
 
 Point camera(0,3,10);
 
-Color ambient;//((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
-//Color ambient (0,0,0);
-/*Sphere light_source1(Point(20,20,20),6);
-Sphere light_source2(Point(-100,100,100),10);
-Point camera(0,3,10);
-Sphere sphere1(Point(-3,-1,0),1);
-Sphere sphere2(Point(0,-1,0),1);
-Sphere sphere3(Point(3,-1,0),1);
-Sphere sphere4(Point(0,2,-6),4);
-Sphere sphere5(Point(0,13,-30),15);
-Plane table(Point(0,-2,0),Point(0,1,0) - Point(0,0,0));
-#define NUM_OBJS 8
-#define NUM_LIGHTS 2
-Solid* objs[NUM_OBJS] {&light_source1, &light_source2, &sphere1, &sphere2, &sphere3, &sphere4, &sphere5, &table};*/
+Color ambient;
 vector<Solid*> objs;
 int num_objs = 0;
 int num_lights = 0;
@@ -47,7 +34,7 @@ struct Trace_return{
 Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
-    Color c = ambient; //((double)0x87/0xff, (double)0xce/0xff, (double)0xeb/0xff);
+    Color c = ambient;
     Material mat = {Color(),0,0};
     Vector<3> normal;
     for(int i = 0; i < num_objs; i++){
@@ -130,7 +117,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    if (dist<1) dist = 1;
 	    to_return = to_return + c*diffuse*shadow_percent*light_source.color/dist/dist;
 	}
-	c = to_return + c*ambient/8;//ref_color*mat.ref+c*diffuse*shadow_percent + c*ambient/8;
+	c = to_return + c*ambient/8;
     }
     return {c,p};
 }
@@ -179,21 +166,6 @@ int main(int argc, char** argv){
     cout << "Threads:        " << NUM_THREADS << endl;
     cout << "Depth:          " << DEPTH << endl;
     cout << "Max rays:       " << WIDTH*HEIGHT*PIXEL_SAMPLES*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
-    /*light_source1.material = {Color(),true,0};
-    light_source1.color = Color(10,10,10);
-    light_source2.material = {Color(),true,0};
-    light_source2.color = Color(250,250,250);
-    sphere1.material = {Color(),false,0};
-    sphere1.color = Color(1,0.5,0.5);
-    sphere2.material = {Color(1,1,1),false,0};
-    sphere2.color = Color(0.5,1,0.5);
-    sphere3.material = {Color(0.5,0.5,0.5),false,M_PI/6};
-    sphere3.color = Color(0.2,0.2,0.4);
-    sphere4.material = {Color(0.9,0.9,0.9),false,0};
-    sphere4.color = Color(0.1,0.1,0.1);
-    sphere5.material = {Color(0.5,0.5,0.5),false,0};
-    sphere5.color = Color(1,1,0.5);
-    table.material = {Color(0.1,0.1,0.1),false,0.1};*/
     objs=*read_json_scene("scene.json");
     int img[WIDTH*HEIGHT];
     thread threads[NUM_THREADS-1];
@@ -201,7 +173,6 @@ int main(int argc, char** argv){
     for(int i = 1; i<NUM_THREADS; i++){
 	generators[i].seed(0);
 	threads[i-1] = thread(do_rays_i,img,i);
-	//threads[i-1].join();
     }
     do_rays_i(img,0);
     for(int i = 1; i<NUM_THREADS; i++){
