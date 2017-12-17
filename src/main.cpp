@@ -30,6 +30,55 @@ struct Trace_return{
     Point point;
 };
 
+void get_intersection(const Line& ray, Color* c, Material* mat, Vector<3>* normal, Point* p){
+    for(int i = 0; i < num_objs; i++){
+	Point p0 = objs[i]->intersect(ray);
+	if (p0.is_valid() && ((*p-ray.point).length() > (p0-ray.point).length())){
+	    *p = p0;
+	    *normal = objs[i]->normal(p0);
+	    *mat = objs[i]->material;
+	    *c = objs[i]->get_color(p0);
+	}
+    }
+}
+
+Color get_direct_diffuse(const Line& ray, const Point& p, Vector<3> normal, int thread_num){
+    Color total_diffuse;
+    for(int k = 0; k< num_objs; k++){
+	if (!objs[k]->material.is_light) continue;
+	Sphere light_source = *((Sphere*)objs[k]);
+	int shadows = 0;
+	for(int i = 0; i<SHADOW_SAMPLES; i++){
+	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
+	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+	    double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
+	    double x = r*sin(theta)*cos(phi) + light_source.center.x;
+	    double y = r*sin(theta)*sin(phi) + light_source.center.y;
+	    double z = r*cos(theta) + light_source.center.z;
+	    Line shadow_ray(p, Point(x,y,z));
+	    for(int j = 0; j < num_objs; j++){
+		if (!objs[j]->material.is_light){
+		    if (objs[j]->intersect(shadow_ray).is_valid()){
+			shadows++;
+			break;
+		    }
+		}
+	    }
+
+	}
+	double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
+	Line ref (light_source.center,p);
+	ref.reflect(p,normal);
+	double specular = pow(ray.direction.dot(ref.direction),1);
+	double diffuse = -ref.direction.dot(normal);
+	if (specular<0) specular = 0;
+	if (diffuse<0) diffuse = 0;
+	double dist = (p-light_source.center).length()/10;
+	if (dist<1) dist = 1;
+	total_diffuse = total_diffuse + light_source.color/dist/dist*diffuse*shadow_percent;
+    }
+    return total_diffuse;
+}
 
 Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
@@ -37,16 +86,9 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     Color c = ambient;
     Material mat = {Color(),0,0};
     Vector<3> normal;
-    for(int i = 0; i < num_objs; i++){
-	Point p0 = objs[i]->intersect(ray);
-	if (p0.is_valid() && ((p-ray.point).length() > (p0-ray.point).length())){
-	    p = p0;
-	    normal = objs[i]->normal(p);
-	    mat = objs[i]->material;
-	    c = objs[i]->get_color(p);
-	}
-    }
-    if (p.is_valid()){
+    get_intersection(ray,&c,&mat,&normal,&p);
+    //if (mat.is_light) return {c,p};
+    if (p.is_valid() && (!mat.is_light)){
 	Color ref_color(0,0,0);
 	if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero()){
 	    Line new_ray = ray;
@@ -82,42 +124,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    }
 	    ref_color = ref_color/num;
 	}
-	Color to_return = ref_color*mat.ref;
-	for(int k = 0; k< num_objs; k++){
-	    if (!objs[k]->material.is_light) continue;
-	    Sphere light_source = *((Sphere*)objs[k]);
-	    int shadows = 0;
-	    for(int i = 0; i<SHADOW_SAMPLES; i++){
-		double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
-		double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-		double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
-		double x = r*sin(theta)*cos(phi) + light_source.center.x;
-		double y = r*sin(theta)*sin(phi) + light_source.center.y;
-		double z = r*cos(theta) + light_source.center.z;
-		Line shadow_ray(p, Point(x,y,z));
-		for(int j = 0; j < num_objs; j++){
-		    if (!objs[j]->material.is_light){
-			if (objs[j]->intersect(shadow_ray).is_valid()){
-			    shadows++;
-			    break;
-			}
-		    }
-		}
-		
-	    }
-	    double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
-	    if (mat.is_light) return {c,p};
-	    Line ref (light_source.center,p);
-	    ref.reflect(p,normal);
-	    double specular = pow(ray.direction.dot(ref.direction),1);
-	    double diffuse = -ref.direction.dot(normal);
-	    if (specular<0) specular = 0;
-	    if (diffuse<0) diffuse = 0;
-	    double dist = (p-light_source.center).length()/10;
-	    if (dist<1) dist = 1;
-	    to_return = to_return + c*diffuse*shadow_percent*light_source.color/dist/dist;
-	}
-	c = to_return + c*ambient/8;
+	c = ref_color*mat.ref + c*(ambient/8+get_direct_diffuse(ray,p,normal,thread_num));
     }
     return {c,p};
 }
