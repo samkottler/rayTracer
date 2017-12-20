@@ -12,8 +12,12 @@ using json = nlohmann::json;
 
 extern Color ambient;
 extern int num_lights;
-extern int num_objs;    
-
+extern int num_objs;
+extern double exposure;
+extern int pixel_samples;
+extern int width;
+extern int height;
+extern int scale;
 
 vector<Solid*>* read_json_scene(string filename){
     vector<Solid*>* objs = new vector<Solid*>;
@@ -21,9 +25,21 @@ vector<Solid*>* read_json_scene(string filename){
     json details;
     scene>>details;
     json a = details["ambient"];
-    ambient = Color(a[0],a[1],a[2]);
+    exposure = details["exposure"];
+    double r = a[0];
+    double g = a[1];
+    double b = a[2];
+    r = (1.0/(1-r)-1)/exposure;
+    g = (1.0/(1-g)-1)/exposure;
+    b = (1.0/(1-b)-1)/exposure;
+    ambient = Color(r,g,b);
     num_lights = 0;
     num_objs = details["num_objs"];
+    pixel_samples = details["pixel_samples"];
+    //exposure = details["exposure"];
+    width = details["width"];
+    height = details["height"];
+    scale = details["scale"];
     for(int i = 0; i< num_objs; i++){
 	json obj;
 	scene>>obj;

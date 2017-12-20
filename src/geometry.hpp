@@ -13,9 +13,10 @@ public:
 	b = b1;
     }
     int to_int(double max){
-	int r_int = r*255/max;
-	int g_int = g*255/max;
-	int b_int = b*255/max;
+	//double l = log(max+1);
+	int r_int = (1-(1.0/(r/max+1)))*255;
+	int g_int = (1-(1.0/(g/max+1)))*255;
+	int b_int = (1-(1.0/(b/max+1)))*255;
 	if (r_int>255) r_int = 255;
 	if (g_int>255) g_int = 255;
 	if (b_int>255) b_int = 255;
@@ -121,6 +122,7 @@ public:
 	return line.point + t*line.direction;
     }
     Color get_color(const Point& p) const{
+	//return Color(0.5,0.9,0.9);
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
@@ -129,7 +131,7 @@ public:
 	double c = (x==z)?0.5:1;
 	if ((v[0]<0) != (v[2]<0))
 	    c = (x==z)?1:0.5;
-	return Color(c,c,c);
+	return Color(0.2,c,c);
     }
     Vector<3> normal(const Point& p) const{
 	return norm;
