@@ -49,10 +49,10 @@ vector<Solid*>* read_json_scene(string filename){
 	    Sphere* s = new Sphere(Point(p[0],p[1],p[2]),obj["radius"]);
 	    json c = obj["color"];
 	    s->color = Color(c[0],c[1],c[2]);
-	    if (obj["is_light"]) s->material = {Color(), true, 0};
+	    if (obj["is_light"]) s->material = {Color(), true, 0, 0, 0, 0};
 	    else{
 		json rc = obj["reflect_color"];
-		s->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"]};
+		s->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"], obj["diffuse"], obj["specular"], obj["specular_exp"]};
 	    }
 	    objs->push_back(s);
 	}
@@ -66,7 +66,7 @@ vector<Solid*>* read_json_scene(string filename){
 	    if (obj["is_light"]) pl->material = {Color(),true,0};
 	    else{
 		json rc = obj["reflect_color"];
-		pl->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"]};
+		pl->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"], obj["diffuse"], obj["specular"], obj["specular_exp"]};
 	    }
 	    objs->push_back(pl);
 	}

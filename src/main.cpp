@@ -86,7 +86,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient;
-    Material mat = {Color(),0,0};
+    Material mat = {Color(),0,0,0,0,0};
     Vector<3> normal;
     get_intersection(ray,&c,&mat,&normal,&p);
     //if (mat.is_light) return {c,p};
@@ -119,14 +119,19 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
 		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
-		double specular = pow(ray.direction.dot(new_ray.direction),1);
+		double specular = 0;
+		Line ref = new_ray;
+		ref.reflect(p,normal);
+		ref.direction=ref.direction*-1;
+		specular = pow(ref.direction.dot(ray.direction),mat.specular_exp);
 		double diffuse = new_ray.direction.dot(normal);
+		//cout<<specular<<endl;
 		if (specular<0) specular = 0;
 		if (diffuse<0) diffuse = 0;
 		double dist = (p-deaper.point).length()/10;
 		if (dist<1) dist = 1;
 		if (!deaper.point.is_valid()) dist = 1;
-		double intensity = (diffuse);
+		double intensity = mat.diffuse*diffuse+mat.specular*specular;
 		ref_color = ref_color + deaper.color*intensity;
 	    }
 	    ref_color = ref_color/num;

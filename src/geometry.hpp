@@ -48,6 +48,9 @@ struct Material{
     Color ref;
     bool is_light;
     double scatter_angle;
+    double diffuse;
+    double specular;
+    double specular_exp;
 };
 
 class Point{
