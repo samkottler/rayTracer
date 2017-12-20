@@ -1,7 +1,7 @@
 {
     "num_objs": 3,
     "_ambient": [0.529411,0.807843,0.921568],
-    "ambient": [0,0,0],
+    "ambient": [0.5,0.5,0.5],
     "exposure": 20,
     "pixel_samples": 1000,
     "scale": 15,
@@ -34,7 +34,7 @@
     "color": [0.9,0.9,0.9],
     "diffuse": 0,
     "specular": 1,
-    "specular_exp": 1,
+    "specular_exp": 100,
     "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
 }
