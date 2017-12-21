@@ -110,11 +110,12 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    ref.direction=ref.direction*-1;*/
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
-		double theta_rand = (double)generators[thread_num]()/generators[thread_num].max()*M_PI/2;
+		double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
 		double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-		v[0] = sin(theta_rand)*cos(phi_rand);
-		v[1] = sin(theta_rand)*sin(phi_rand);
-		v[2] = cos(theta_rand);
+		double sin_rand = sqrt(1-u_rand*u_rand);
+		v[0] = sin_rand*cos(phi_rand);
+		v[1] = sin_rand*sin(phi_rand);
+		v[2] = u_rand;
 		if (fabs(normal[2] - 1) < 0.0001){
 		    new_ray.direction = v;
 		}
@@ -135,7 +136,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 		//if (dist<1) dist = 1;
 		//if (!deaper.point.is_valid()) dist = 1;
 		double intensity = mat.diffuse*diffuse+mat.specular*specular;
-		if (intensity<0.1){i--; continue;}
+		if (intensity<0.01){i--; continue;}
 		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
 		ref_color = ref_color + deaper.color*intensity;
 	    }
