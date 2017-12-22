@@ -26,6 +26,8 @@ long num_rays[NUM_THREADS];
 double exposure;
 int pixel_samples;
 int width,height,scale;
+double lens_radius;
+double focal_length;
 
 struct Trace_return{
     Color color;
@@ -105,9 +107,9 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    n.normalize();
 	    double sint = sin(theta);
 	    double cost = cos(theta);
-	    /*Line ref = new_ray;
+	    Line ref = ray;
 	    ref.reflect(p,normal);
-	    ref.direction=ref.direction*-1;*/
+	    ref.direction=ref.direction*-1;
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
 		double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
@@ -122,21 +124,13 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 		else{
 		    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
 		}
-		//Trace_return deaper = trace(new_ray, remaining-1, thread_num);
 		double specular = 0;
-		Line ref = new_ray;
-		ref.reflect(p,normal);
-		ref.direction=ref.direction*-1;
-		specular = pow(ref.direction.dot(ray.direction),mat.specular_exp);
+		specular = pow(ref.direction.dot(new_ray.direction),mat.specular_exp);
 		double diffuse = new_ray.direction.dot(normal);
-		//cout<<specular<<endl;
 		if (specular<0) specular = 0;
 		if (diffuse<0) diffuse = 0;
-		//double dist = (p-deaper.point).length()/10;
-		//if (dist<1) dist = 1;
-		//if (!deaper.point.is_valid()) dist = 1;
 		double intensity = mat.diffuse*diffuse+mat.specular*specular;
-		if (intensity<0.01){i--; continue;}
+		if (intensity<0.1){i--; continue;}
 		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
 		ref_color = ref_color + deaper.color*intensity;
 	    }
@@ -159,7 +153,14 @@ void do_rays_i(int* img, int num){
 		double xShift = (double)generators[num]()/generators[num].max()-0.5;
 		double yShift = (double)generators[num]()/generators[num].max()-0.5;
 		Point pixel((double)(x-width/2+xShift)/scale,(double)(height/2-y+yShift)/scale,0);
-		Line ray = Line(camera, pixel);
+		double theta = (double)generators[num]()/generators[num].max()*2*M_PI;
+		double rad = (double)generators[num]()/generators[num].max()*lens_radius;
+		Vector<3> lens_shift;
+		lens_shift[0] = rad*cos(theta); lens_shift[1] = rad*sin(theta); lens_shift[2] = 0;
+		Vector<3> D = pixel-camera;
+		D.normalize();
+		Point C = camera+focal_length*D;
+		Line ray = Line(camera+lens_shift, C);
 		c = c + trace(ray, DEPTH, num).color;
 	    }
 	    c = c/pixel_samples;
@@ -190,7 +191,7 @@ int main(int argc, char** argv){
     cout << "Scatter rays:   " << SCATTER_SAMPLES << endl;
     cout << "Threads:        " << NUM_THREADS << endl;
     cout << "Depth:          " << DEPTH << endl;
-    cout << "Max rays:       " << width*height*pixel_samples*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
+    cout << "Max rays:       " << (double)width*height*pixel_samples*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
     //objs=*read_json_scene("scene.json");
     int* img = new int[width*height];
     thread threads[NUM_THREADS-1];
@@ -214,7 +215,7 @@ int main(int argc, char** argv){
 	rays+= num_rays[i];
     }
     cout << "Time: " << min << "m" << sec << "s" << endl;
-    cout << "Rays: " << rays << endl;
+    cout << "Rays: " <<defaultfloat<< (double)rays << endl;
     writeImage((char*)"test.png", width, height, img);
     return 0;
 }
