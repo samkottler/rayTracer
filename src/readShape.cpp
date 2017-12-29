@@ -31,9 +31,9 @@ vector<Solid*>* read_json_scene(string filename){
     double r = a[0];
     double g = a[1];
     double b = a[2];
-    r = (1.0/(1-r)-1)/exposure;
-    g = (1.0/(1-g)-1)/exposure;
-    b = (1.0/(1-b)-1)/exposure;
+    //r = (1.0/(1-r)-1)/exposure;
+    //g = (1.0/(1-g)-1)/exposure;
+    //b = (1.0/(1-b)-1)/exposure;
     ambient = Color(r,g,b);
     num_lights = 0;
     num_objs = details["num_objs"];

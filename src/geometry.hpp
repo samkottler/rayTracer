@@ -14,9 +14,12 @@ public:
     }
     int to_int(double max){
 	//double l = log(max+1);
-	int r_int = (1-(1.0/(r/max+1)))*255;
-	int g_int = (1-(1.0/(g/max+1)))*255;
-	int b_int = (1-(1.0/(b/max+1)))*255;
+	//int r_int = (1-(1.0/(r/max+1)))*255;
+	//int g_int = (1-(1.0/(g/max+1)))*255;
+	//int b_int = (1-(1.0/(b/max+1)))*255;
+	int r_int = 255*r/max;
+	int g_int = 255*g/max;
+	int b_int = 255*b/max;
 	if (r_int>255) r_int = 255;
 	if (g_int>255) g_int = 255;
 	if (b_int>255) b_int = 255;

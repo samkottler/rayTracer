@@ -164,9 +164,7 @@ void do_rays_i(int* img, int num){
 		c = c + trace(ray, DEPTH, num).color;
 	    }
 	    c = c/pixel_samples;
-	    if (x==0 && y==0){
-		//cout<<c.r<<" "<<c.g<<" " <<c.b<<" " <<hex<< c.to_int(1.0/exposure)<<endl;
-	    }
+	    //cout<<c.r<<" "<<c.g<<" " <<c.b<<" " <<hex<< c.to_int(1.0/exposure)<<endl;
 	    img[y*width+x]=c.to_int(1.0/exposure);
 	}
 	if (completed_lock.try_lock()){
