@@ -14,6 +14,7 @@ extern Color ambient;
 extern int num_lights;
 extern int num_objs;
 extern double exposure;
+extern int num_blurs;
 extern int pixel_samples;
 extern int width;
 extern int height;
@@ -28,6 +29,7 @@ vector<Solid*>* read_json_scene(string filename){
     scene>>details;
     json a = details["ambient"];
     exposure = details["exposure"];
+    num_blurs = details["num_blurs"];
     double r = a[0];
     double g = a[1];
     double b = a[2];
@@ -67,6 +69,10 @@ vector<Solid*>* read_json_scene(string filename){
 	    norm[0] = n[0]; norm[1] = n[1]; norm[2] = n[2];
 	    norm.normalize();
 	    Plane* pl = new Plane(Point(p[0],p[1],p[2]),norm);
+	    json col1 = obj["color1"];
+	    json col2 = obj["color2"];
+	    pl->color1 = Color(col1[0],col1[1],col1[2]);
+	    pl->color2 = Color(col2[0],col2[1],col2[2]);
 	    if (obj["is_light"]) pl->material = {Color(),true,0};
 	    else{
 		json rc = obj["reflect_color"];

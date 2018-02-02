@@ -24,6 +24,7 @@ int num_lights = 0;
 default_random_engine generators[NUM_THREADS];
 long num_rays[NUM_THREADS];
 double exposure;
+int num_blurs;
 int pixel_samples;
 int width,height,scale;
 double lens_radius;
@@ -141,9 +142,64 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     return {c,p};
 }
 
+void blur(Color* colors, int radius, double stddev){
+    double kernel[(2*radius+1)*(2*radius+1)];
+    double denom = 2*stddev*stddev;
+    for (int y = -radius; y<=radius; y++){
+	for (int x = -radius; x<=radius; x++){
+	    kernel[(y+radius)*(2*radius+1)+x+radius] = exp(-(x*x+y*y)/denom)/denom/M_PI;
+	    //cout << kernel[(y+radius)*(2*radius+1)+x+radius] << " ";
+	}
+	//cout << endl;
+    }
+    //int num_blurs = 2;
+    Color* blurs[1+num_blurs];
+    blurs[0] = new Color[width*height];
+    for (int i = 0; i<width*height; i++){
+	double r,g,b;
+	r=g=b=0;
+	if (colors[i].r*exposure > 1) r = colors[i].r;
+	if (colors[i].g*exposure > 1) g = colors[i].g;
+	if (colors[i].b*exposure > 1) b = colors[i].b;
+	blurs[0][i] = Color(r,g,b);
+    }
+    for (int i = 1; i< 1+num_blurs; i++){
+	blurs[i] = new Color[width*height];
+	for (int y = 0; y<height; y++){
+	    for(int x = 0; x<width; x++){
+		Color c;
+		for (int ky = -radius; ky<=radius; ky++){
+		    for (int kx = -radius; kx<=radius; kx++){
+			if ((y+ky)>=0 && (y+ky)<height && (x+kx)>=0 && (x+kx)<width){
+			    c = c+blurs[i-1][(y+ky)*width+(x+kx)]*kernel[(ky+radius)*(2*radius+1)+kx+radius];
+			}
+		    }
+		}
+		//cout<< c.b << endl;
+		blurs[i][y*width+x] = c;
+	    }
+	}
+    }
+    for (int i = 0; i<width*height; i++){
+	colors[i] = colors[i] + blurs[num_blurs][i];
+    }
+    for (int i = 0; i< 1+num_blurs; i++){
+	delete blurs[i];
+    }
+}
+
+void expose(int* img, Color* colors){
+    blur(colors, 20, 3);
+    for (int y=0; y<height; y++){
+	for (int x=0; x<width; x++){
+	    img[y*width+x]=colors[y*width+x].to_int(1.0/exposure);
+	}
+    }
+}
+
 int completed = 0;
 mutex completed_lock;
-void do_rays_i(int* img, int num){
+void do_rays_i(Color* img, int num){
     int local_count = 0;
     for (int y = num; y < height; y+=NUM_THREADS){
 	for (int x = 0; x < width; x++) {
@@ -165,7 +221,7 @@ void do_rays_i(int* img, int num){
 	    }
 	    c = c/pixel_samples;
 	    //cout<<c.r<<" "<<c.g<<" " <<c.b<<" " <<hex<< c.to_int(1.0/exposure)<<endl;
-	    img[y*width+x]=c.to_int(1.0/exposure);
+	    img[y*width+x]=c;
 	}
 	if (completed_lock.try_lock()){
 	    completed += local_count +1;
@@ -192,13 +248,14 @@ int main(int argc, char** argv){
     cout << "Max rays:       " << (double)width*height*pixel_samples*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
     //objs=*read_json_scene("scene.json");
     int* img = new int[width*height];
+    Color* colors = new Color[width*height];
     thread threads[NUM_THREADS-1];
     auto start = chrono::system_clock::now();
     for(int i = 1; i<NUM_THREADS; i++){
 	generators[i].seed(0);
-	threads[i-1] = thread(do_rays_i,img,i);
+	threads[i-1] = thread(do_rays_i,colors,i);
     }
-    do_rays_i(img,0);
+    do_rays_i(colors,0);
     for(int i = 1; i<NUM_THREADS; i++){
 	threads[i-1].join();
     }
@@ -214,6 +271,7 @@ int main(int argc, char** argv){
     }
     cout << "Time: " << min << "m" << sec << "s" << endl;
     cout << "Rays: " <<defaultfloat<< (double)rays << endl;
+    expose(img, colors);
     writeImage((char*)"test.png", width, height, img);
     return 0;
 }

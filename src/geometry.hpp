@@ -107,7 +107,7 @@ class Solid{
 public:
     Material material;
     virtual Point intersect(const Line& line) const = 0;
-    virtual Color get_color(const Point& p) const = 0;
+    virtual const Color& get_color(const Point& p) const = 0;
     virtual Vector<3> normal(const Point& p) const = 0;
 };
 
@@ -115,6 +115,8 @@ class Plane: public Solid{
 public:
     Point point;
     Vector<3> norm;
+    Color color1;
+    Color color2;
     Plane(const Point& p, const Vector<3>& n){
 	point = p;
 	norm = n;
@@ -127,17 +129,17 @@ public:
 	if (t == INFINITY || t == -INFINITY) t = NAN;
 	return line.point + t*line.direction;
     }
-    Color get_color(const Point& p) const{
+    const Color& get_color(const Point& p) const{
 	//return Color(0.5,0.9,0.9);
 	Vector<3> v = p - point;
 	int x = (int)(v[0])%2;
 	int z = (int)(v[2])%2;
 	if (v[0]<0) x=-x;
 	if (v[2]<0) z=-z;
-	double c = (x==z)?0.5:1;
+	const Color* c = (x==z)?&color1:&color2;
 	if ((v[0]<0) != (v[2]<0))
-	    c = (x==z)?1:0.5;
-	return Color(0.2,c,c);
+	    c = (x==z)?(&color2):(&color1);
+	return *c;
     }
     Vector<3> normal(const Point& p) const{
 	return norm;
@@ -165,7 +167,7 @@ public:
 	//cout << t << endl;
 	return line.point + t*line.direction;
     }
-    Color get_color(const Point& point) const{
+    const Color& get_color(const Point& point) const{
 	return color;
     }
     Vector<3> normal(const Point& p) const{
