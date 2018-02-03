@@ -111,6 +111,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    Line ref = ray;
 	    ref.reflect(p,normal);
 	    ref.direction=ref.direction*-1;
+	    double limit = 0.8*(double)generators[thread_num]()/generators[thread_num].max();
 	    for(int i = 0; i< num; i++){
 		Vector<3> v;
 		double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
@@ -131,7 +132,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 		if (specular<0) specular = 0;
 		if (diffuse<0) diffuse = 0;
 		double intensity = mat.diffuse*diffuse+mat.specular*specular;
-		if (intensity<0.1){i--; continue;}
+		if (intensity<limit){i--; continue;}
 		Trace_return deaper = trace(new_ray, remaining-1, thread_num);
 		ref_color = ref_color + deaper.color*intensity;
 	    }
@@ -158,9 +159,9 @@ void blur(Color* colors, int radius, double stddev){
     for (int i = 0; i<width*height; i++){
 	double r,g,b;
 	r=g=b=0;
-	if (colors[i].r*exposure > 1) r = colors[i].r;
-	if (colors[i].g*exposure > 1) g = colors[i].g;
-	if (colors[i].b*exposure > 1) b = colors[i].b;
+	if (colors[i].r*exposure > 1) r = exposure;//colors[i].r - 1.0/exposure;
+	if (colors[i].g*exposure > 1) g = exposure;//colors[i].g - 1.0/exposure;
+	if (colors[i].b*exposure > 1) b = exposure;//colors[i].b - 1.0/exposure;
 	blurs[0][i] = Color(r,g,b);
     }
     for (int i = 1; i< 1+num_blurs; i++){

@@ -1,10 +1,10 @@
 {
     "num_objs": 3,
-    "ambient": [0.529411,0.807843,0.921568],
-    "_ambient": [0,0,0],
+    "_ambient": [0.529411,0.807843,0.921568],
+    "ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 10000,
+    "pixel_samples": 1000,
     "scale": 15,
     "width": 200,
     "height": 200,
@@ -26,10 +26,10 @@
 }
 {
     "shape": "sphere",
-    "center": [20.0,20.0,20.0],
+    "center": [10.0,10.0,-10.0],
     "radius": 2,
     "is_light": true,
-    "color": [400.0,400.0,400.0]
+    "color": [100.0,100.0,100.0]
 }
 {
     "shape": "sphere",
