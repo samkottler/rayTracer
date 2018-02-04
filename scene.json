@@ -1,23 +1,23 @@
 {
-    "num_objs": 3,
-    "_ambient": [0.529411,0.807843,0.921568],
-    "ambient": [0,0,0],
+    "num_objs": 4,
+    "ambient": [0.529411,0.807843,0.921568],
+    "-ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 1000,
-    "scale": 15,
-    "width": 200,
-    "height": 200,
-    "lens_radius": 0,
-    "focal_length": 16
+    "pixel_samples": 10000,
+    "scale": 30,
+    "width": 400,
+    "height": 400,
+    "lens_radius": 0.3,
+    "focal_length": 13
 }
 {
     "shape": "plane",
     "is_light": false,
     "point": [0,-2,0],
     "normal": [0,1,0],
-    "color1": [0.1,0.5,0.5],
-    "color2": [0.1,0.25,0.25],
+    "color1": [0.3,0.1,0.1],
+    "color2": [0.15,0.1,0.1],
     "diffuse": 1,
     "specular": 1,
     "specular_exp": 1,
@@ -33,47 +33,25 @@
 }
 {
     "shape": "sphere",
-    "center": [0,2,-6],
-    "radius": 4,
+    "center": [-3,0,-3],
+    "radius": 2,
     "is_light": false,
     "color": [0.9,0.9,0.9],
-    "diffuse": 1,
-    "specular": 0,
+    "diffuse": 0,
+    "specular": 2,
     "specular_exp": 100,
     "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
 }
 {
     "shape": "sphere",
-    "center": [-3,-1,0],
-    "radius": 1,
+    "center": [3,0,-3],
+    "radius": 2,
     "is_light": false,
-    "color": [1,0.5,0.5],
-    "reflect_color": [0,0,0],
+    "color": [0.9,0.9,0.9],
+    "diffuse": 1,
+    "specular": 0,
+    "specular_exp": 1,
+    "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
-}
-{
-    "shape": "sphere",
-    "center": [0,-1,0],
-    "radius": 1,
-    "is_light": false,
-    "color": [0.2,0.4,0.2],
-    "reflect_color": [1,1,1],
-    "reflection_angle": 0
-}
-{
-    "shape": "sphere",
-    "center": [3,-1,0],
-    "radius": 1,
-    "is_light": false,
-    "color": [0.2,0.2,0.4],
-    "reflect_color": [0.5,0.5,0.5],
-    "reflection_angle": 0.5
-}
-{
-    "shape": "sphere",
-    "center": [-100,100,100],
-    "radius": 10,
-    "is_light": true,
-    "color": [250.0,250.0,250.0]
 }
