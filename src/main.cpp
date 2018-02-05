@@ -138,7 +138,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    }
 	    ref_color = ref_color/num;
 	}
-	c = c*ref_color;// + c*(ambient/8);
+	c = c*(ref_color+get_direct_diffuse(ray,p,normal,thread_num));// + c*(ambient/8);
     }
     return {c,p};
 }
