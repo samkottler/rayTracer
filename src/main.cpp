@@ -21,14 +21,18 @@ Color ambient;
 vector<Solid*> objs;
 int num_objs = 0;
 int num_lights = 0;
-default_random_engine generators[NUM_THREADS];
-long num_rays[NUM_THREADS];
+default_random_engine* generators;
+long* num_rays;
 double exposure;
 int num_blurs;
 int pixel_samples;
 int width,height,scale;
 double lens_radius;
 double focal_length;
+int shadow_samples;
+int ray_depth;
+int num_threads;
+int scatter_samples;
 
 struct Trace_return{
     Color color;
@@ -53,7 +57,7 @@ Color get_direct_diffuse(const Line& ray, const Point& p, Vector<3> normal, int 
 	if (!objs[k]->material.is_light) continue;
 	Sphere light_source = *((Sphere*)objs[k]);
 	int shadows = 0;
-	for(int i = 0; i<SHADOW_SAMPLES; i++){
+	for(int i = 0; i<shadow_samples; i++){
 	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
 	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
 	    double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
@@ -69,9 +73,8 @@ Color get_direct_diffuse(const Line& ray, const Point& p, Vector<3> normal, int 
 		    }
 		}
 	    }
-
 	}
-	double shadow_percent = (1-(double)shadows/SHADOW_SAMPLES);
+	double shadow_percent = (1-(double)shadows/shadow_samples);
 	Line ref (light_source.center,p);
 	ref.reflect(p,normal);
 	double specular = -pow(ray.direction.dot(ref.direction),1);
@@ -100,7 +103,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    new_ray.reflect(p, normal);
 	    new_ray.direction = new_ray.direction*-1;
 	    //Vector<3> copy = new_ray.direction;
-	    const int num = (mat.scatter_angle!=0)?SCATTER_SAMPLES:1;
+	    const int num = (mat.scatter_angle!=0)?scatter_samples:1;
 	    double theta = acos(normal[2]);
 	    Vector<3> n;
 	    n[0]=0;n[1]=0;n[2]=1;
@@ -202,7 +205,7 @@ int completed = 0;
 mutex completed_lock;
 void do_rays_i(Color* img, int num){
     int local_count = 0;
-    for (int y = num; y < height; y+=NUM_THREADS){
+    for (int y = num; y < height; y+=num_threads){
 	for (int x = 0; x < width; x++) {
 	    //int r=0, g=0, b=0;
 	    Color c;
@@ -218,7 +221,7 @@ void do_rays_i(Color* img, int num){
 		D.normalize();
 		Point C = camera+focal_length*D;
 		Line ray = Line(camera+lens_shift, C);
-		c = c + trace(ray, DEPTH, num).color;
+		c = c + trace(ray, ray_depth, num).color;
 	    }
 	    c = c/pixel_samples;
 	    //cout<<c.r<<" "<<c.g<<" " <<c.b<<" " <<hex<< c.to_int(1.0/exposure)<<endl;
@@ -241,23 +244,24 @@ int main(int argc, char** argv){
     cout << "Scale:          " << scale << endl;
     cout << "Width:          " << width << endl;
     cout << "Height:         " << height << endl;
-    cout << "Shadow samples: " << SHADOW_SAMPLES << endl;
+    cout << "Shadow samples: " << shadow_samples << endl;
     cout << "Pixel samples:  " << pixel_samples << endl;
-    cout << "Scatter rays:   " << SCATTER_SAMPLES << endl;
-    cout << "Threads:        " << NUM_THREADS << endl;
-    cout << "Depth:          " << DEPTH << endl;
-    cout << "Max rays:       " << (double)width*height*pixel_samples*DEPTH*pow(SCATTER_SAMPLES,DEPTH) << endl;
-    //objs=*read_json_scene("scene.json");
+    cout << "Scatter rays:   " << scatter_samples << endl;
+    cout << "Threads:        " << num_threads << endl;
+    cout << "Depth:          " << ray_depth << endl;
+    cout << "Max rays:       " << (double)width*height*pixel_samples*ray_depth*pow(scatter_samples,ray_depth) << endl;
+    num_rays = new long[num_threads];
+    generators = new default_random_engine[num_threads];
     int* img = new int[width*height];
     Color* colors = new Color[width*height];
-    thread threads[NUM_THREADS-1];
+    thread threads[num_threads-1];
     auto start = chrono::system_clock::now();
-    for(int i = 1; i<NUM_THREADS; i++){
+    for(int i = 1; i<num_threads; i++){
 	generators[i].seed(0);
 	threads[i-1] = thread(do_rays_i,colors,i);
     }
     do_rays_i(colors,0);
-    for(int i = 1; i<NUM_THREADS; i++){
+    for(int i = 1; i<num_threads; i++){
 	threads[i-1].join();
     }
     auto end = chrono::system_clock::now();
@@ -267,7 +271,7 @@ int main(int argc, char** argv){
     int min = sec/60;
     sec = sec - min*60;
     long rays = 0;
-    for (int i = 0; i< NUM_THREADS; i++){
+    for (int i = 0; i< num_threads; i++){
 	rays+= num_rays[i];
     }
     cout << "Time: " << min << "m" << sec << "s" << endl;

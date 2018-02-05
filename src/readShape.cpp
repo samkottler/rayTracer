@@ -21,6 +21,10 @@ extern int height;
 extern int scale;
 extern double lens_radius;
 extern double focal_length;
+extern int shadow_samples;
+extern int ray_depth;
+extern int scatter_samples;
+extern int num_threads;
 
 vector<Solid*>* read_json_scene(string filename){
     vector<Solid*>* objs = new vector<Solid*>;
@@ -46,6 +50,10 @@ vector<Solid*>* read_json_scene(string filename){
     scale = details["scale"];
     lens_radius = details["lens_radius"];
     focal_length = details["focal_length"];
+    shadow_samples = details["shadow_samples"];
+    ray_depth = details["ray_depth"];
+    scatter_samples = details["scatter_samples"];
+    num_threads = details["num_threads"];
     for(int i = 0; i< num_objs; i++){
 	json obj;
 	scene>>obj;
