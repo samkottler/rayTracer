@@ -10,10 +10,8 @@
 using namespace std;
 
 #include "Vector.hpp"
-#include "rayTracer.hpp"
 #include "geometry.hpp"
-
-vector<Solid*>* read_json_scene(string filename);
+#include "rayTracer.hpp"
 
 Point camera(0,3,10);
 
@@ -34,12 +32,7 @@ int ray_depth;
 int num_threads;
 int scatter_samples;
 
-struct Trace_return{
-    Color color;
-    Point point;
-};
-
-void get_intersection(const Line& ray, Color* c, Material* mat, Vector<3>* normal, Point* p){
+void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, Point* p){
     for(int i = 0; i < num_objs; i++){
 	Point p0 = objs[i]->intersect(ray);
 	if (p0.is_valid() && ((*p-ray.point).length() > (p0-ray.point).length())){
@@ -51,7 +44,7 @@ void get_intersection(const Line& ray, Color* c, Material* mat, Vector<3>* norma
     }
 }
 
-Color get_direct_diffuse(const Line& ray, const Point& p, Vector<3> normal, int thread_num){
+Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, int thread_num){
     Color total_diffuse;
     for(int k = 0; k< num_objs; k++){
 	if (!objs[k]->material.is_light) continue;
@@ -93,19 +86,17 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient;
     Material mat = {Color(),0,0,0,0,0};
-    Vector<3> normal;
+    Vector normal;
     get_intersection(ray,&c,&mat,&normal,&p);
-    //if (mat.is_light) return {c,p};
     if (p.is_valid() && (!mat.is_light)){
 	Color ref_color(0,0,0);
 	if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero()){
 	    Line new_ray = ray;
 	    new_ray.reflect(p, normal);
 	    new_ray.direction = new_ray.direction*-1;
-	    //Vector<3> copy = new_ray.direction;
 	    const int num = (mat.scatter_angle!=0)?scatter_samples:1;
 	    double theta = acos(normal[2]);
-	    Vector<3> n;
+	    Vector n;
 	    n[0]=0;n[1]=0;n[2]=1;
 	    n=n.cross(normal);
 	    n.normalize();
@@ -116,7 +107,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    ref.direction=ref.direction*-1;
 	    double limit = 0.8*(double)generators[thread_num]()/generators[thread_num].max();
 	    for(int i = 0; i< num; i++){
-		Vector<3> v;
+		Vector v;
 		double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
 		double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
 		double sin_rand = sqrt(1-u_rand*u_rand);
@@ -141,7 +132,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    }
 	    ref_color = ref_color/num;
 	}
-	c = c*(ref_color+get_direct_diffuse(ray,p,normal,thread_num));// + c*(ambient/8);
+	c = c*(ref_color+get_direct_radiance(ray,p,normal,thread_num));
     }
     return {c,p};
 }
@@ -152,23 +143,18 @@ void blur(Color* colors, int radius, double stddev){
     for (int y = -radius; y<=radius; y++){
 	for (int x = -radius; x<=radius; x++){
 	    kernel[(y+radius)*(2*radius+1)+x+radius] = exp(-(x*x+y*y)/denom)/denom/M_PI;
-	    //cout << kernel[(y+radius)*(2*radius+1)+x+radius] << " ";
 	}
-	//cout << endl;
     }
-    //int num_blurs = 2;
-    Color* blurs[1+num_blurs];
-    blurs[0] = new Color[width*height];
+    Color blurs[1+num_blurs][width*height];
     for (int i = 0; i<width*height; i++){
 	double r,g,b;
 	r=g=b=0;
-	if (colors[i].r*exposure > 1) r = exposure;//colors[i].r - 1.0/exposure;
-	if (colors[i].g*exposure > 1) g = exposure;//colors[i].g - 1.0/exposure;
-	if (colors[i].b*exposure > 1) b = exposure;//colors[i].b - 1.0/exposure;
+	if (colors[i].r*exposure > 1) r = exposure;
+	if (colors[i].g*exposure > 1) g = exposure;
+	if (colors[i].b*exposure > 1) b = exposure;
 	blurs[0][i] = Color(r,g,b);
     }
     for (int i = 1; i< 1+num_blurs; i++){
-	blurs[i] = new Color[width*height];
 	for (int y = 0; y<height; y++){
 	    for(int x = 0; x<width; x++){
 		Color c;
@@ -179,16 +165,12 @@ void blur(Color* colors, int radius, double stddev){
 			}
 		    }
 		}
-		//cout<< c.b << endl;
 		blurs[i][y*width+x] = c;
 	    }
 	}
     }
     for (int i = 0; i<width*height; i++){
 	colors[i] = colors[i] + blurs[num_blurs][i];
-    }
-    for (int i = 0; i< 1+num_blurs; i++){
-	delete blurs[i];
     }
 }
 
@@ -207,7 +189,6 @@ void do_rays_i(Color* img, int num){
     int local_count = 0;
     for (int y = num; y < height; y+=num_threads){
 	for (int x = 0; x < width; x++) {
-	    //int r=0, g=0, b=0;
 	    Color c;
 	    for (int i = 0; i<pixel_samples; i++){
 		double xShift = (double)generators[num]()/generators[num].max()-0.5;
@@ -215,16 +196,15 @@ void do_rays_i(Color* img, int num){
 		Point pixel((double)(x-width/2+xShift)/scale,(double)(height/2-y+yShift)/scale,0);
 		double theta = (double)generators[num]()/generators[num].max()*2*M_PI;
 		double rad = (double)generators[num]()/generators[num].max()*lens_radius;
-		Vector<3> lens_shift;
+		Vector lens_shift;
 		lens_shift[0] = rad*cos(theta); lens_shift[1] = rad*sin(theta); lens_shift[2] = 0;
-		Vector<3> D = pixel-camera;
+		Vector D = pixel-camera;
 		D.normalize();
 		Point C = camera+focal_length*D;
 		Line ray = Line(camera+lens_shift, C);
 		c = c + trace(ray, ray_depth, num).color;
 	    }
 	    c = c/pixel_samples;
-	    //cout<<c.r<<" "<<c.g<<" " <<c.b<<" " <<hex<< c.to_int(1.0/exposure)<<endl;
 	    img[y*width+x]=c;
 	}
 	if (completed_lock.try_lock()){

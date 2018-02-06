@@ -73,7 +73,7 @@ vector<Solid*>* read_json_scene(string filename){
 	else{
 	    json p = obj["point"];
 	    json n = obj["normal"];
-	    Vector<3> norm;
+	    Vector norm;
 	    norm[0] = n[0]; norm[1] = n[1]; norm[2] = n[2];
 	    norm.normalize();
 	    Plane* pl = new Plane(Point(p[0],p[1],p[2]),norm);

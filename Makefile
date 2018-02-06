@@ -6,7 +6,7 @@ CXXFLAGS = -std=gnu++11
 CLIBS = -lm -lpng -lpthread
 BIN = ./bin
 OBJ = ./obj
-objects = pngUtil.o main.o readShape.o
+objects = pngUtil.o main.o readShape.o Vector.o geometry.o
 OBJS = $(objects:%.o=$(OBJ)/%.o)
 binaries = main
 BINS = $(binaries:%=$(BIN)/%)
