@@ -145,7 +145,8 @@ void blur(Color* colors, int radius, double stddev){
 	    kernel[(y+radius)*(2*radius+1)+x+radius] = exp(-(x*x+y*y)/denom)/denom/M_PI;
 	}
     }
-    Color blurs[1+num_blurs][width*height];
+    Color* blurs[1+num_blurs];
+    blurs[0] = new Color[width*height];
     for (int i = 0; i<width*height; i++){
 	double r,g,b;
 	r=g=b=0;
@@ -155,6 +156,7 @@ void blur(Color* colors, int radius, double stddev){
 	blurs[0][i] = Color(r,g,b);
     }
     for (int i = 1; i< 1+num_blurs; i++){
+	blurs[i] = new Color[width*height];
 	for (int y = 0; y<height; y++){
 	    for(int x = 0; x<width; x++){
 		Color c;
@@ -171,6 +173,9 @@ void blur(Color* colors, int radius, double stddev){
     }
     for (int i = 0; i<width*height; i++){
 	colors[i] = colors[i] + blurs[num_blurs][i];
+    }
+    for (int i = 1; i<num_blurs+1; i++){
+	delete blurs[i];
     }
 }
 
