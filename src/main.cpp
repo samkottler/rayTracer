@@ -45,7 +45,7 @@ void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, 
 }
 
 Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, Material mat, int thread_num){
-    Color total_diffuse;
+    Color total_light;
     for(int k = 0; k< num_objs; k++){
 	if (!objs[k]->material.is_light) continue;
 	Sphere light_source = *((Sphere*)objs[k]);
@@ -70,15 +70,15 @@ Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, Materi
 	double shadow_percent = (1-(double)shadows/shadow_samples);
 	Line ref (light_source.center,p);
 	ref.reflect(p,normal);
-	double specular = -mat.specular*pow(ray.direction.dot(ref.direction),mat.specular_exp);
+	double specular = mat.specular*pow(ray.direction.dot(ref.direction),mat.specular_exp);
 	double diffuse = -mat.diffuse*ref.direction.dot(normal);
 	if (specular<0) specular = 0;
 	if (diffuse<0) diffuse = 0;
 	double dist = (p-light_source.center).length()/10;
 	if (dist<1) dist = 1;
-	total_diffuse = total_diffuse + light_source.color/dist/dist*diffuse*shadow_percent;
+	total_light = total_light + light_source.color/dist/dist*(diffuse+specular)*shadow_percent;
     }
-    return total_diffuse;
+    return total_light;
 }
 
 Trace_return trace(const Line& ray, int remaining, int thread_num){
@@ -105,7 +105,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    Line ref = ray;
 	    ref.reflect(p,normal);
 	    ref.direction=ref.direction*-1;
-	    double limit = 0.8*(double)generators[thread_num]()/generators[thread_num].max();
+	    double limit =0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
 	    for(int i = 0; i< num; i++){
 		Vector v;
 		double u_rand = (double)generators[thread_num]()/generators[thread_num].max();

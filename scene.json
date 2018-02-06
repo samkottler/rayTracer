@@ -5,14 +5,14 @@
     "-ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 100,
+    "pixel_samples": 1000,
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 2,
     "scale": 15,
     "width": 200,
     "height": 200,
-    "lens_radius": 0.3,
+    "lens_radius": 0,
     "focal_length": 13
 }
 {
@@ -20,10 +20,10 @@
     "is_light": false,
     "point": [0,-2,0],
     "normal": [0,1,0],
-    "color1": [0.4,0.1,0.1],
-    "color2": [0.2,0.1,0.1],
-    "diffuse": 1,
-    "specular": 1,
+    "color1": [0.5,0.1,0.1],
+    "color2": [0.25,0.1,0.1],
+    "diffuse": 0.5,
+    "specular": 0.5,
     "specular_exp": 1,
     "reflect_color": [0.1,0.1,0.1],
     "reflection_angle": 0.1
