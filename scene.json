@@ -9,9 +9,9 @@
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 2,
-    "scale": 30,
-    "width": 400,
-    "height": 400,
+    "scale": 15,
+    "width": 200,
+    "height": 200,
     "lens_radius": 0.3,
     "focal_length": 13
 }

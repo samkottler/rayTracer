@@ -44,7 +44,7 @@ void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, 
     }
 }
 
-Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, int thread_num){
+Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, Material mat, int thread_num){
     Color total_diffuse;
     for(int k = 0; k< num_objs; k++){
 	if (!objs[k]->material.is_light) continue;
@@ -70,8 +70,8 @@ Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, int th
 	double shadow_percent = (1-(double)shadows/shadow_samples);
 	Line ref (light_source.center,p);
 	ref.reflect(p,normal);
-	double specular = -pow(ray.direction.dot(ref.direction),1);
-	double diffuse = -ref.direction.dot(normal);
+	double specular = -mat.specular*pow(ray.direction.dot(ref.direction),mat.specular_exp);
+	double diffuse = -mat.diffuse*ref.direction.dot(normal);
 	if (specular<0) specular = 0;
 	if (diffuse<0) diffuse = 0;
 	double dist = (p-light_source.center).length()/10;
@@ -132,7 +132,7 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
 	    }
 	    ref_color = ref_color/num;
 	}
-	c = c*(ref_color+get_direct_radiance(ray,p,normal,thread_num));
+	c = c*(ref_color+get_direct_radiance(ray,p,normal,mat,thread_num));
     }
     return {c,p};
 }
