@@ -31,6 +31,7 @@ int shadow_samples;
 int ray_depth;
 int num_threads;
 int scatter_samples;
+double distance_scale;
 
 void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, Point* p){
     for(int i = 0; i < num_objs; i++){
@@ -74,7 +75,7 @@ Color get_direct_radiance(const Line& ray, const Point& p, Vector normal, Materi
 	double diffuse = -mat.diffuse*ref.direction.dot(normal);
 	if (specular<0) specular = 0;
 	if (diffuse<0) diffuse = 0;
-	double dist = (p-light_source.center).length()/10;
+	double dist = (p-light_source.center).length()/distance_scale;
 	if (dist<1) dist = 1;
 	total_light = total_light + light_source.color/dist/dist*(diffuse+specular)*shadow_percent;
     }
