@@ -91,16 +91,16 @@ Point Plane::intersect(const Line& line) const{
     if (t == INFINITY || t == -INFINITY) t = NAN;
     return line.point + t*line.direction;
 }
-const Color& Plane::get_color(const Point& p) const{
+const Material& Plane::get_material(const Point& p) const{
     Vector v = p - point;
     int x = (int)(v[0])%2;
     int z = (int)(v[2])%2;
     if (v[0]<0) x=-x;
     if (v[2]<0) z=-z;
-    const Color* c = (x==z)?&color1:&color2;
+    const Material* m = (x==z)?&material1:&material2;
     if ((v[0]<0) != (v[2]<0))
-	c = (x==z)?(&color2):(&color1);
-    return *c;
+	m = (x==z)?(&material2):(&material1);
+    return *m;
 }
 Vector Plane::normal(const Point& p) const{
     return norm;
@@ -121,8 +121,8 @@ Point Sphere::intersect(const Line& line) const{
     if (t<0.001) t = NAN;
     return line.point + t*line.direction;
 }
-const Color& Sphere::get_color(const Point& point) const{
-    return color;
+const Material& Sphere::get_material(const Point& point) const{
+    return material;
 }
 Vector Sphere::normal(const Point& p) const{
     return (p-center).normalize();

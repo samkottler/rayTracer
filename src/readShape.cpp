@@ -63,12 +63,18 @@ vector<Solid*>* read_json_scene(string filename){
 	if (obj["shape"].get<string>().compare("sphere")==0){
 	    json p = obj["center"];
 	    Sphere* s = new Sphere(Point(p[0],p[1],p[2]),obj["radius"]);
-	    json c = obj["color"];
-	    s->color = Color(c[0],c[1],c[2]);
-	    if (obj["is_light"]) s->material = {Color(), true, 0, 0, 0, 0};
+	    if (obj["is_light"]){
+		s->material = {Color(), true, Color(), Color(), 0};
+		json c = obj["color"];
+		s->color = Color(c[0],c[1],c[2]);
+		s->is_light = true;
+	    }
 	    else{
+		s->is_light = false;
 		json rc = obj["reflect_color"];
-		s->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"], obj["diffuse"], obj["specular"], obj["specular_exp"]};
+		json diffuse = obj["diffuse"];
+		json specular = obj["specular"];
+		s->material = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"]};
 	    }
 	    objs->push_back(s);
 	}
@@ -79,14 +85,20 @@ vector<Solid*>* read_json_scene(string filename){
 	    norm[0] = n[0]; norm[1] = n[1]; norm[2] = n[2];
 	    norm.normalize();
 	    Plane* pl = new Plane(Point(p[0],p[1],p[2]),norm);
-	    json col1 = obj["color1"];
-	    json col2 = obj["color2"];
-	    pl->color1 = Color(col1[0],col1[1],col1[2]);
-	    pl->color2 = Color(col2[0],col2[1],col2[2]);
-	    if (obj["is_light"]) pl->material = {Color(),true,0};
+	    //json col1 = obj["color1"];
+	    //json col2 = obj["color2"];
+	    //pl->color1 = Color(col1[0],col1[1],col1[2]);
+	    //pl->color2 = Color(col2[0],col2[1],col2[2]);
+	    if (obj["is_light"]) pl->material1 = pl->material2 = {Color(),true,Color(),Color(),0};
 	    else{
 		json rc = obj["reflect_color"];
-		pl->material = {Color(rc[0],rc[1],rc[2]),false, obj["reflection_angle"], obj["diffuse"], obj["specular"], obj["specular_exp"]};
+		json diffuse = obj["diffuse1"];
+		json specular = obj["specular1"];
+		pl->is_light = false;
+		pl->material1 = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"]};
+		diffuse = obj["diffuse2"];
+		specular = obj["specular2"];
+		pl->material2 = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"]};
 	    }
 	    objs->push_back(pl);
 	}

@@ -17,9 +17,8 @@ public:
 struct Material{
     Color ref;
     bool is_light;
-    double scatter_angle;
-    double diffuse;
-    double specular;
+    Color diffuse;
+    Color specular;
     double specular_exp;
 };
 
@@ -44,9 +43,9 @@ public:
 
 class Solid{
 public:
-    Material material;
+    bool is_light;
     virtual Point intersect(const Line& line) const = 0;
-    virtual const Color& get_color(const Point& p) const = 0;
+    virtual const Material& get_material(const Point& p) const = 0;
     virtual Vector normal(const Point& p) const = 0;
 };
 
@@ -54,11 +53,11 @@ class Plane: public Solid{
 public:
     Point point;
     Vector norm;
-    Color color1;
-    Color color2;
+    Material material1;
+    Material material2;
     Plane(const Point& p, const Vector& n);
     Point intersect(const Line& line) const;
-    const Color& get_color(const Point& p) const;
+    const Material& get_material(const Point& p) const;
     Vector normal(const Point& p) const;
 };
     
@@ -66,9 +65,10 @@ class Sphere: public Solid{
 public:
     double radius;
     Point center;
+    Material material;
     Color color;
     Sphere(const Point& p, double r);
     Point intersect(const Line& line) const;
-    const Color& get_color(const Point& point) const;
+    const Material& get_material(const Point& point) const;
     Vector normal(const Point& p) const;
 };

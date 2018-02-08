@@ -33,14 +33,13 @@ int num_threads;
 int scatter_samples;
 double distance_scale;
 
-void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, Point* p){
+void get_intersection(const Line& ray, Material* mat, Vector* normal, Point* p){
     for(int i = 0; i < num_objs; i++){
 	Point p0 = objs[i]->intersect(ray);
 	if (p0.is_valid() && ((*p-ray.point).length() > (p0-ray.point).length())){
 	    *p = p0;
 	    *normal = objs[i]->normal(p0);
-	    *mat = objs[i]->material;
-	    *c = objs[i]->get_color(p0);
+	    *mat = objs[i]->get_material(p0);
 	}
     }
 }
@@ -48,7 +47,8 @@ void get_intersection(const Line& ray, Color* c, Material* mat, Vector* normal, 
 Color get_direct_radiance(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int thread_num){
     Color total_light;
     for(int k = 0; k< num_objs; k++){
-	if (!objs[k]->material.is_light) continue;
+	//Sphere light_source = *((Sphere*)objs[k]);
+	if (!objs[k]->is_light) continue;
 	Sphere light_source = *((Sphere*)objs[k]);
 	int shadows = 0;
 	for(int i = 0; i<shadow_samples; i++){
@@ -60,24 +60,24 @@ Color get_direct_radiance(const Line& ray, const Point& p, const Vector& normal,
 	    double z = r*cos(theta) + light_source.center.z;
 	    Line shadow_ray(p, Point(x,y,z));
 	    for(int j = 0; j < num_objs; j++){
-		if (!objs[j]->material.is_light){
-		    if (objs[j]->intersect(shadow_ray).is_valid()){
-			shadows++;
-			break;
-		    }
+		if (k==j) continue;
+		if (objs[j]->intersect(shadow_ray).is_valid()){
+		    shadows++;
+		    break;
+		    
 		}
 	    }
 	}
 	double shadow_percent = (1-(double)shadows/shadow_samples);
 	Line ref (light_source.center,p);
 	ref.reflect(p,normal);
-	double specular = mat.specular*pow(ray.direction.dot(ref.direction),mat.specular_exp);
-	double diffuse = -mat.diffuse*ref.direction.dot(normal);
+	double specular = pow(ray.direction.dot(ref.direction),mat.specular_exp);
+	double diffuse = -ref.direction.dot(normal);
 	if (specular<0) specular = 0;
 	if (diffuse<0) diffuse = 0;
 	double dist = (p-light_source.center).length()/distance_scale;
 	if (dist<1) dist = 1;
-	total_light = total_light + light_source.color/dist/dist*(diffuse+specular)*shadow_percent;
+	total_light = total_light + light_source.color/dist/dist*(mat.diffuse*diffuse+mat.specular*specular)*shadow_percent;
     }
     return total_light;
 }
@@ -98,9 +98,8 @@ Color get_indirect_reflection(const Line& ray, const Point& p, const Vector& nor
 	Line ref = ray;
 	ref.reflect(p,normal);
 	ref.direction=ref.direction*-1;
-	const int num = (mat.scatter_angle!=0)?scatter_samples:1;
 	double limit =0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
-	for(int i = 0; i< num; i++){
+	for(int i = 0; i< scatter_samples; i++){
 	    Vector v;
 	    double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
 	    double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
@@ -119,12 +118,13 @@ Color get_indirect_reflection(const Line& ray, const Point& p, const Vector& nor
 	    double diffuse = new_ray.direction.dot(normal);
 	    if (specular<0) specular = 0;
 	    if (diffuse<0) diffuse = 0;
-	    double intensity = mat.diffuse*diffuse+mat.specular*specular;
-	    if (intensity<limit){i--; continue;}
+	    Color intensity = mat.diffuse*diffuse+mat.specular*specular;
+	    double lightness = intensity.r + intensity.g + intensity.b;
+	    if (lightness<limit){i--; continue;}
 	    Trace_return deaper = trace(new_ray, remaining-1, thread_num);
 	    ref_color = ref_color + deaper.color*intensity;
 	}
-	ref_color = ref_color/num;
+	ref_color = ref_color/scatter_samples;
     }
     return ref_color;
 }			      
@@ -133,11 +133,11 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient;
-    Material mat = {Color(),0,0,0,0,0};
+    Material mat = {Color(),0,Color(),Color(),0};
     Vector normal;
-    get_intersection(ray,&c,&mat,&normal,&p);
+    get_intersection(ray,&mat,&normal,&p);
     if (p.is_valid() && (!mat.is_light)){
-	c = c*(get_indirect_reflection(ray,p,normal,mat,remaining, thread_num)+get_direct_radiance(ray,p,normal,mat,thread_num));
+	c = (get_indirect_reflection(ray,p,normal,mat,remaining, thread_num)+get_direct_radiance(ray,p,normal,mat,thread_num));
     }
     return {c,p};
 }
