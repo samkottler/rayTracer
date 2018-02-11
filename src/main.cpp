@@ -13,7 +13,7 @@ using namespace std;
 #include "geometry.hpp"
 #include "rayTracer.hpp"
 
-Point camera(0,0,20);
+Point camera(0,0,40);
 
 Color ambient;
 vector<Solid*> objs;
@@ -24,7 +24,8 @@ long* num_rays;
 double exposure;
 int num_blurs;
 int pixel_samples;
-int width,height,scale;
+int width,height;
+double scale;
 double lens_radius;
 double focal_length;
 int shadow_samples;

@@ -101,8 +101,8 @@ Point Plane::intersect(const Line& line) const{
 }
 const Material& Plane::get_material(const Point& p) const{
     Vector v = p - point;
-    int x = (int)(v[0])%2;
-    int z = (int)(v[2])%2;
+    int x = (int)(v[0]/5)%2;
+    int z = (int)(v[2]/5)%2;
     if (v[0]<0) x=-x;
     if (v[2]<0) z=-z;
     const Material* m = (x==z)?&material1:&material2;

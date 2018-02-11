@@ -18,7 +18,7 @@ extern int num_blurs;
 extern int pixel_samples;
 extern int width;
 extern int height;
-extern int scale;
+extern double scale;
 extern double lens_radius;
 extern double focal_length;
 extern int shadow_samples;
