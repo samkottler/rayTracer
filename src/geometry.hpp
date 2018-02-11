@@ -60,6 +60,7 @@ public:
     Vector norm;
     Material material1;
     Material material2;
+    Plane(){};
     Plane(const Point& p, const Vector& n);
     Point intersect(const Line& line) const;
     const Material& get_material(const Point& p) const;
@@ -75,5 +76,16 @@ public:
     Sphere(const Point& p, double r);
     Point intersect(const Line& line) const;
     const Material& get_material(const Point& point) const;
+    Vector normal(const Point& p) const;
+};
+
+class Face: public Plane{
+public:
+    Point* verts;
+    int num;
+    Material material;
+    Face(const Vector& n, int num_verts, Point* v);
+    Point intersect(const Line& line) const;
+    const Material& get_material(const Point& p) const;
     Vector normal(const Point& p) const;
 };

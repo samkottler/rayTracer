@@ -13,7 +13,7 @@ using namespace std;
 #include "geometry.hpp"
 #include "rayTracer.hpp"
 
-Point camera(0,3,10);
+Point camera(0,0,20);
 
 Color ambient;
 vector<Solid*> objs;
@@ -54,7 +54,7 @@ Color get_direct_radiance(const Line& ray, const Point& p, const Vector& normal,
 	for(int i = 0; i<shadow_samples; i++){
 	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
 	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-	    double r = (double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
+	    double r = 0;//(double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
 	    double x = r*sin(theta)*cos(phi) + light_source.center.x;
 	    double y = r*sin(theta)*sin(phi) + light_source.center.y;
 	    double z = r*cos(theta) + light_source.center.z;
@@ -192,12 +192,13 @@ Trace_return trace(const Line& ray, int remaining, double refraction_index, int 
     Material mat = {Color(),0,Color(),Color(),0};
     Vector normal;
     get_intersection(ray,&mat,&normal,&p);
+    if (mat.is_light) c = mat.ref;
     if (p.is_valid() && (!mat.is_light)){
 	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
 	    c = Color(0,0,0);
 	}
 	else// entering
-	    c = get_direct_radiance(ray,p,normal,mat,thread_num) + get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
+	    c = /*get_direct_radiance(ray,p,normal,mat,thread_num) +*/ get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
 	c = c + (get_refraction(ray,p,normal,mat,remaining,refraction_index,thread_num));
     }
     return {c,p};

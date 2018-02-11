@@ -80,17 +80,13 @@ vector<Solid*>* read_json_scene(string filename){
 	    }
 	    objs->push_back(s);
 	}
-	else{
+	else if (obj["shape"].get<string>().compare("plane")==0){
 	    json p = obj["point"];
 	    json n = obj["normal"];
 	    Vector norm;
 	    norm[0] = n[0]; norm[1] = n[1]; norm[2] = n[2];
 	    norm.normalize();
 	    Plane* pl = new Plane(Point(p[0],p[1],p[2]),norm);
-	    //json col1 = obj["color1"];
-	    //json col2 = obj["color2"];
-	    //pl->color1 = Color(col1[0],col1[1],col1[2]);
-	    //pl->color2 = Color(col2[0],col2[1],col2[2]);
 	    if (obj["is_light"]) pl->material1 = pl->material2 = {Color(),true,Color(),Color(),0, Color(),Color(), 0,0};
 	    else{
 		json rc = obj["reflect_color"];
@@ -103,6 +99,32 @@ vector<Solid*>* read_json_scene(string filename){
 		pl->material2 = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 	    }
 	    objs->push_back(pl);
+	}
+	else{
+	    json n = obj["normal"];
+	    Vector norm;
+	    norm[0] = n[0]; norm[1] = n[1]; norm[2] = n[2];
+	    norm.normalize();
+	    json verts = obj["verts"];
+	    int num = verts.size();
+	    Point* p_verts = new Point[num];
+	    for (int i = 0; i< num; i++){
+		json point = verts[i];
+		p_verts[i] = Point(point[0],point[1],point[2]);
+	    }
+	    Face* f = new Face(norm,num,p_verts);
+	    if (obj["is_light"]){
+		json c = obj["color"];
+		f->material = {Color(c[0],c[1],c[2]), true, Color(), Color(), 0, Color(), Color(), 0,0};
+	    }
+	    else{
+		json rc = obj["reflect_color"];
+		json diffuse = obj["diffuse"];
+		json specular = obj["specular"];
+		f->is_light = false;
+		f->material = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+	    }
+	    objs->push_back(f);
 	}
     }
     return objs;

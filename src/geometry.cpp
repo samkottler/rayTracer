@@ -135,3 +135,25 @@ const Material& Sphere::get_material(const Point& point) const{
 Vector Sphere::normal(const Point& p) const{
     return (p-center).normalize();
 }
+
+Face::Face(const Vector& n, int num_verts, Point* v){
+    point = v[0];
+    norm = n;
+    verts = v;
+    num = num_verts;    
+}
+Point Face::intersect(const Line& line) const{
+    Point p = this->Plane::intersect(line);
+    for (int i = 0; i<num; i++){
+	double to_p = (verts[i]-verts[(i+1)%num]).dot(verts[i]-p);
+	double to_next = (verts[i]-verts[(i+1)%num]).dot(verts[i]-verts[(i+2)%num]);
+	if (to_p*to_next<0) return Point(NAN,NAN,NAN);
+    }
+    return p;
+}
+const Material& Face::get_material(const Point& p) const{
+    return material;
+}
+Vector Face::normal(const Point& p) const{
+    return norm;
+}
