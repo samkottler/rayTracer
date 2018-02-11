@@ -20,6 +20,10 @@ struct Material{
     Color diffuse;
     Color specular;
     double specular_exp;
+    Color refraction_diffuse;
+    Color refraction_specular;
+    double refraction_specular_exp;
+    double refraction_index;
 };
 
 class Point{
@@ -39,6 +43,7 @@ public:
     Line(const Point& p, const Vector& d);
     Line(const Point& p0, const Point& p1);
     Line& reflect(const Point& pNew, const Vector& normal);
+    Line& refract(const Point& pNew, const Vector& normal, double n1, double n2);
 };
 
 class Solid{

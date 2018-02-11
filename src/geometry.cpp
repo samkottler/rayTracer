@@ -78,6 +78,14 @@ Line& Line::reflect(const Point& pNew, const Vector& normal){
     direction = 2*w - direction;
     return *this;
 }
+Line& Line::refract(const Point& pNew, const Vector& normal, double n1, double n2){
+    point = pNew;
+    double ratio = n1/n2;
+    double nv = fabs(normal.dot(direction));
+    //cout<< nv << " " <<ratio*nv - sqrt(1-ratio*ratio*(1-nv*nv))<<endl;
+    direction = ratio*direction + (ratio*nv - sqrt(1-ratio*ratio*(1-nv*nv)))*normal;
+    return *this;
+}
 
 Plane::Plane(const Point& p, const Vector& n){
     point = p;

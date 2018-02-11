@@ -1,11 +1,11 @@
 {
     "num_threads": 4,
-    "num_objs": 6,
+    "num_objs": 3,
     "ambient": [0.529411,0.807843,0.921568],
     "-ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 100,
+    "pixel_samples": 1000,
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 2,
@@ -26,6 +26,7 @@
     "specular1": [0.45,0.1,0.1],
     "specular2": [0.225,0.1,0.1],
     "specular_exp": 1,
+    "refraction_index": 0,
     "reflect_color": [0.1,0.1,0.1],
     "reflection_angle": 0.1
 }
@@ -38,25 +39,33 @@
 }
 {
     "shape": "sphere",
-    "center": [0,1,-6],
-    "radius": 3,
+    "center": [0,0,-3],
+    "radius": 2,
     "is_light": false,
     "color": [0.7,0.7,0.7],
     "diffuse": [0,0,0],
-    "specular": [4,4,4],
+    "specular": [1,1,1],
     "specular_exp": 100,
+    "refraction_index": 1.2,
+    "refraction_diffuse": [0,0,0],
+    "refraction_specular": [1,1,1],
+    "refraction_specular_exp": 100,
     "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
 }
 {
     "shape": "sphere",
-    "center": [-3,-1,0],
-    "radius": 1,
+    "center": [-3,0,-3],
+    "radius": 2,
     "is_light": false,
     "color": [0.7,0.7,0.7],
     "diffuse": [0.7,0.7,0.7],
     "specular": [0,0,0],
     "specular_exp": 10,
+    "refraction_index": 0,
+    "refraction_diffuse": [0,0,0],
+    "refraction_specular": [0,0,0],
+    "refraction_specular_exp": 0,
     "reflect_color": [0.9,0.9,0.9],
     "reflection_angle": 0
 }

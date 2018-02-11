@@ -82,7 +82,7 @@ Color get_direct_radiance(const Line& ray, const Point& p, const Vector& normal,
     return total_light;
 }
 
-Color get_indirect_reflection(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int remaining, int thread_num){
+Color get_indirect_reflection(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int remaining, double refraction_index, int thread_num){
     Color ref_color(0,0,0);
     if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero()){
 	Line new_ray = ray;
@@ -121,15 +121,71 @@ Color get_indirect_reflection(const Line& ray, const Point& p, const Vector& nor
 	    Color intensity = mat.diffuse*diffuse+mat.specular*specular;
 	    double lightness = intensity.r + intensity.g + intensity.b;
 	    if (lightness<limit){i--; continue;}
-	    Trace_return deaper = trace(new_ray, remaining-1, thread_num);
+	    Trace_return deaper = trace(new_ray, remaining-1, refraction_index, thread_num);
 	    ref_color = ref_color + deaper.color*intensity;
 	}
 	ref_color = ref_color/scatter_samples;
     }
     return ref_color;
 }			      
-				      
-Trace_return trace(const Line& ray, int remaining, int thread_num){
+
+Color get_refraction(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int remaining, double refraction_index, int thread_num){
+    Color ref_color(0,0,0);
+    if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero() && mat.refraction_index!=0){
+	double n2;
+	Vector actual_normal = normal;
+	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
+	    n2 = 1;
+	    //actual_normal = -1*normal;
+	    //cout  << "blah";
+	}
+	else // entering
+	    n2 = mat.refraction_index;
+	Line new_ray = ray;
+	new_ray.reflect(p, normal);
+	new_ray.direction = new_ray.direction*-1;
+	double theta = acos(-1*actual_normal[2]);
+	Vector n;
+	n[0]=0;n[1]=0;n[2]=1;
+	n=n.cross(-1*actual_normal);
+	n.normalize();
+	double sint = sin(theta);
+	double cost = cos(theta);
+	Line ref = ray;
+	ref.refract(p,actual_normal,refraction_index,n2);
+	double limit =0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
+	for(int i = 0; i< scatter_samples; i++){
+	    Vector v;
+	    double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
+	    double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+	    double sin_rand = sqrt(1-u_rand*u_rand);
+	    v[0] = sin_rand*cos(phi_rand);
+	    v[1] = sin_rand*sin(phi_rand);
+	    v[2] = u_rand;
+	    if (fabs(actual_normal[2] - 1) < 0.0001){
+		new_ray.direction = v;
+	    }
+	    else{
+		new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
+	    }
+	    new_ray = ref;
+	    double specular = pow(ref.direction.dot(new_ray.direction),mat.refraction_specular_exp);
+	    double diffuse = new_ray.direction.dot(-1*actual_normal);
+	    if (specular<0) specular = 0;
+	    if (diffuse<0) diffuse = 0;
+	    Color intensity = mat.refraction_diffuse*diffuse+mat.refraction_specular*specular;
+	    double lightness = intensity.r + intensity.g + intensity.b;
+	    if (lightness<limit){i--; continue;}
+	    Trace_return deaper = trace(new_ray, remaining-1, n2, thread_num);
+	    ref_color = ref_color + deaper.color;
+	}
+	ref_color = ref_color/scatter_samples;
+    }
+    return ref_color;
+}
+
+Trace_return trace(const Line& ray, int remaining, double refraction_index, int thread_num){
+    //cout<<remaining<<endl;
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
     Color c = ambient;
@@ -137,7 +193,12 @@ Trace_return trace(const Line& ray, int remaining, int thread_num){
     Vector normal;
     get_intersection(ray,&mat,&normal,&p);
     if (p.is_valid() && (!mat.is_light)){
-	c = (get_indirect_reflection(ray,p,normal,mat,remaining, thread_num)+get_direct_radiance(ray,p,normal,mat,thread_num));
+	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
+	    c = Color(0,0,0);
+	}
+	else// entering
+	    c = get_direct_radiance(ray,p,normal,mat,thread_num) + get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
+	c = c + (get_refraction(ray,p,normal,mat,remaining,refraction_index,thread_num));
     }
     return {c,p};
 }
@@ -212,7 +273,7 @@ void do_rays_i(Color* img, int num){
 		D.normalize();
 		Point C = camera+focal_length*D;
 		Line ray = Line(camera+lens_shift, C);
-		c = c + trace(ray, ray_depth, num).color;
+		c = c + trace(ray, ray_depth, 1, num).color;
 	    }
 	    c = c/pixel_samples;
 	    img[y*width+x]=c;
