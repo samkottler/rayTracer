@@ -1,17 +1,17 @@
 {
     "num_threads": 4,
-    "num_objs": 7,
+    "num_objs": 8,
     "-ambient": [0.529411,0.807843,0.921568],
     "ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 1000,
+    "pixel_samples": 10000,
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 3,
-    "scale": 5,
-    "width": 400,
-    "height": 400,
+    "scale": 2.5,
+    "width": 200,
+    "height": 200,
     "lens_radius": 0,
     "focal_length": 13,
     "distance_scale": 20
@@ -68,15 +68,27 @@
 }
 {
     "shape": "face",
+    "is_light": false,
+    "normal": [0,-1,0],
+    "verts": [[-20,20.01,-20],[-20,20,20],[20,20,20],[20,20,-20]],
+    "diffuse": [0.7,0.7,0.7],
+    "specular": [0.3,0.3,0.3],
+    "specular_exp": 1,
+    "refraction_index": 0,
+    "reflect_color": [0.1,0.1,0.1],
+    "reflection_angle": 0.1
+}
+{
+    "shape": "face",
     "is_light": true,
     "normal": [0,-1,0],
-    "verts": [[-20,20,-20],[20,20,-20],[20,20,20],[-20,20,20]],
-    "color": [4,4,4]
+    "verts": [[-7,20,-7],[7,20,-7],[7,20,7],[-7,20,7]],
+    "color": [40,40,40]
 }
 {
     "shape": "sphere",
-    "center": [-10,-10,-10],
-    "radius": 10,
+    "center": [-10,-12,-10],
+    "radius": 8,
     "is_light": false,
     "color": [0.7,0.7,0.7],
     "diffuse": [0,0,0],
@@ -91,8 +103,8 @@
 }
 {
     "shape": "sphere",
-    "center": [10,-10,0],
-    "radius": 10,
+    "center": [10,-12,0],
+    "radius": 8,
     "is_light": false,
     "color": [0.7,0.7,0.7],
     "diffuse": [0,0,0],

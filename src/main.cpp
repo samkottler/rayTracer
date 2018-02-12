@@ -135,8 +135,10 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
     if ((remaining!=0) && (!mat.is_light) && !mat.ref.is_zero() && mat.refraction_index!=0){
 	double n2;
 	Vector actual_normal = normal;
+	int shift = 0;
 	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
 	    n2 = 1;
+	    shift = 1;
 	    //actual_normal = -1*normal;
 	    //cout  << "blah";
 	}
@@ -154,7 +156,7 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
 	double cost = cos(theta);
 	Line ref = ray;
 	ref.refract(p,actual_normal,refraction_index,n2);
-	double limit =0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
+	double limit = 0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
 	for(int i = 0; i< scatter_samples; i++){
 	    Vector v;
 	    double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
@@ -171,14 +173,14 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
 	    }
 	    new_ray = ref;
 	    double specular = pow(ref.direction.dot(new_ray.direction),mat.refraction_specular_exp);
-	    double diffuse = new_ray.direction.dot(-1*actual_normal);
+	    double diffuse = new_ray.direction.dot(actual_normal);
 	    if (specular<0) specular = 0;
 	    if (diffuse<0) diffuse = 0;
 	    Color intensity = mat.refraction_diffuse*diffuse+mat.refraction_specular*specular;
 	    double lightness = intensity.r + intensity.g + intensity.b;
 	    if (lightness<limit){i--; continue;}
-	    Trace_return deaper = trace(new_ray, remaining-1, n2, thread_num);
-	    ref_color = ref_color + deaper.color;
+	    Trace_return deaper = trace(new_ray, remaining-shift, n2, thread_num);
+	    ref_color = ref_color + deaper.color*intensity;
 	}
 	ref_color = ref_color/scatter_samples;
     }

@@ -84,6 +84,7 @@ Line& Line::refract(const Point& pNew, const Vector& normal, double n1, double n
     double nv = fabs(normal.dot(direction));
     //cout<< nv << " " <<ratio*nv - sqrt(1-ratio*ratio*(1-nv*nv))<<endl;
     direction = ratio*direction + (ratio*nv - sqrt(1-ratio*ratio*(1-nv*nv)))*normal;
+    direction.normalize();
     return *this;
 }
 
