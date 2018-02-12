@@ -14,7 +14,7 @@
     "height": 200,
     "lens_radius": 0,
     "focal_length": 13,
-    "distance_scale": 20
+    "distance_scale": 4
 }
 {
     "shape": "plane",

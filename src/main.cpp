@@ -48,37 +48,30 @@ void get_intersection(const Line& ray, Material* mat, Vector* normal, Point* p){
 Color get_direct_radiance(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int thread_num){
     Color total_light;
     for(int k = 0; k< num_objs; k++){
-	//Sphere light_source = *((Sphere*)objs[k]);
 	if (!objs[k]->is_light) continue;
-	Sphere light_source = *((Sphere*)objs[k]);
+	Solid* light_source = objs[k];
 	int shadows = 0;
-	for(int i = 0; i<shadow_samples; i++){
-	    double theta = (double)generators[thread_num]()/generators[thread_num].max()*M_PI;
-	    double phi = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-	    double r = 0;//(double)generators[thread_num]()/generators[thread_num].max()*light_source.radius;
-	    double x = r*sin(theta)*cos(phi) + light_source.center.x;
-	    double y = r*sin(theta)*sin(phi) + light_source.center.y;
-	    double z = r*cos(theta) + light_source.center.z;
-	    Line shadow_ray(p, Point(x,y,z));
-	    for(int j = 0; j < num_objs; j++){
-		if (k==j) continue;
-		if (objs[j]->intersect(shadow_ray).is_valid()){
-		    shadows++;
-		    break;
-		    
-		}
+	Point rp = light_source->rand_point(generators[thread_num]);
+	//cout<< rp.x << " " <<rp.y <<  " " << rp.z<<endl;
+	Line shadow_ray(p, rp);
+	for(int j = 0; j < num_objs; j++){
+	    if (k==j) continue;
+	    Point intersection = objs[j]->intersect(shadow_ray);
+	    if (intersection.is_valid() && (intersection - p).length() < (rp-p).length()){
+		shadows++;
+		break;	    
 	    }
 	}
-	double shadow_percent = (1-(double)shadows/shadow_samples);
-	Line ref (light_source.center,p);
+	double shadow_percent = (1-(double)shadows);
+	Line ref (rp,p);
 	ref.reflect(p,normal);
 	double specular = pow(ray.direction.dot(ref.direction),mat.specular_exp);
 	double diffuse = -ref.direction.dot(normal);
 	if (specular<0) specular = 0;
 	if (diffuse<0) diffuse = 0;
-	double dist = (p-light_source.center).length()/distance_scale;
+	double dist = (p-rp).length()/distance_scale;
 	if (dist<1) dist = 1;
-	total_light = total_light + light_source.color/dist/dist*(mat.diffuse*diffuse+mat.specular*specular)*shadow_percent;
+	total_light = total_light + light_source->color/dist/dist*(mat.diffuse*diffuse+mat.specular*specular)*shadow_percent;
     }
     return total_light;
 }
@@ -205,7 +198,9 @@ Trace_return trace(const Line& ray, int remaining, double refraction_index, int 
 	else// entering
 	    c = /*get_direct_radiance(ray,p,normal,mat,thread_num) +*/ get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
 	c = c + (get_refraction(ray,p,normal,mat,remaining,refraction_index,thread_num));
+	if (remaining == 0) c = c + get_direct_radiance(ray,p,normal,mat,thread_num);
     }
+    //if (remaining == 0) c = c + get_direct_radiance(ray,p,normal,mat,thread_num);
     return {c,p};
 }
 

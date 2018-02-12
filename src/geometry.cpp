@@ -1,4 +1,5 @@
 #include <cmath>
+#include <random>
 #include "geometry.hpp"
 
 using namespace std;
@@ -114,6 +115,9 @@ const Material& Plane::get_material(const Point& p) const{
 Vector Plane::normal(const Point& p) const{
     return norm;
 }
+Point Plane::rand_point(default_random_engine& gen) const {
+    return point;
+}
 
 
 Sphere::Sphere(const Point& p, double r){
@@ -136,12 +140,20 @@ const Material& Sphere::get_material(const Point& point) const{
 Vector Sphere::normal(const Point& p) const{
     return (p-center).normalize();
 }
+Point Sphere::rand_point(default_random_engine& gen) const{
+    double u_rand = (double)gen()/gen.max();
+    double phi_rand = (double)gen()/gen.max()*2*M_PI;
+    double sin_rand = sqrt(1-u_rand*u_rand);
+    return Point(center.x + sin_rand*cos(phi_rand), center.y + sin_rand*sin(phi_rand), center.z + u_rand);
+}
 
 Face::Face(const Vector& n, int num_verts, Point* v){
     point = v[0];
     norm = n;
     verts = v;
-    num = num_verts;    
+    num = num_verts;
+    v1 = verts[0] - verts[1];
+    v2 = verts[2] - verts[1];
 }
 Point Face::intersect(const Line& line) const{
     Point p = this->Plane::intersect(line);
@@ -157,4 +169,9 @@ const Material& Face::get_material(const Point& p) const{
 }
 Vector Face::normal(const Point& p) const{
     return norm;
+}
+Point Face::rand_point(default_random_engine& gen) const{
+    double r1 = (double)gen()/gen.max();
+    double r2 = (double)gen()/gen.max();
+    return verts[1] + v1*r1 + v2*r2;
 }

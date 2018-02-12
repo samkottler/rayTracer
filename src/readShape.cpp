@@ -115,6 +115,8 @@ vector<Solid*>* read_json_scene(string filename){
 	    Face* f = new Face(norm,num,p_verts);
 	    if (obj["is_light"]){
 		json c = obj["color"];
+		f->is_light = true;
+		f->color = Color(c[0],c[1],c[2]);
 		f->material = {Color(c[0],c[1],c[2]), true, Color(), Color(), 0, Color(), Color(), 0,0};
 	    }
 	    else{
