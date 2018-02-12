@@ -139,7 +139,7 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
 	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
 	    n2 = 1;
 	    shift = 1;
-	    //actual_normal = -1*normal;
+	    actual_normal = -1*normal;
 	    //cout  << "blah";
 	}
 	else // entering
@@ -155,7 +155,9 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
 	double sint = sin(theta);
 	double cost = cos(theta);
 	Line ref = ray;
-	ref.refract(p,actual_normal,refraction_index,n2);
+	double nv = actual_normal.dot(ray.direction);
+	if((n2*n2)/(refraction_index*refraction_index) < 1-nv*nv) ref.reflect(p,actual_normal);
+	else ref.refract(p,actual_normal,refraction_index,n2);
 	double limit = 0.1;// 0.5*(double)generators[thread_num]()/generators[thread_num].max();
 	for(int i = 0; i< scatter_samples; i++){
 	    Vector v;
