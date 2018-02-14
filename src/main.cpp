@@ -183,7 +183,7 @@ void blur(Color* colors, int radius, double stddev){
 	colors[i] = colors[i] + blurs[num_blurs][i];
     }
     for (int i = 1; i<num_blurs+1; i++){
-	delete blurs[i];
+	delete[] blurs[i];
     }
 }
 
