@@ -97,3 +97,23 @@ public:
     Vector normal(const Point& p) const;
     Point rand_point(std::default_random_engine& gen) const;
 };
+
+struct path_node{
+    path_node* next;
+    Point point;
+    Material mat;
+    bool reflection;
+    Vector normal, comparison;
+};
+
+//linked list of path_nodes ending at the camera
+class Path{
+private:
+    path_node* head;
+public:
+    Path(const Point& end);
+    Color trace();
+    void add(const Point p, const Vector normal, const Vector comparison, const Material mat, bool reflect);
+    ~Path();
+};
+    

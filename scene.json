@@ -1,6 +1,6 @@
 {
-    "num_threads": 4,
-    "num_objs": 8,
+    "num_threads": 1,
+    "num_objs": 6,
     "-ambient": [0.529411,0.807843,0.921568],
     "ambient": [0,0,0],
     "exposure": 1,
@@ -83,16 +83,16 @@
     "is_light": true,
     "normal": [0,-1,0],
     "verts": [[-7,20,-27],[7,20,-27],[7,20,-13],[-7,20,-13]],
-    "color": [40,40,40]
+    "color": [1,1,1]
 }
 {
     "shape": "sphere",
-    "center": [-10,-14,-30],
+    "center": [0,-14,-20],
     "radius": 6,
     "is_light": false,
     "color": [0.7,0.7,0.7],
-    "diffuse": [0,0,0],
-    "specular": [4,4,4],
+    "diffuse": [1,1,1],
+    "specular": [0,0,0],
     "specular_exp": 100,
     "refraction_index": 0,
     "refraction_diffuse": [0,0,0],

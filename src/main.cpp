@@ -182,7 +182,7 @@ Color get_refraction(const Line& ray, const Point& p, const Vector& normal, cons
     return ref_color;
 }
 
-Trace_return trace(const Line& ray, int remaining, double refraction_index, int thread_num){
+void add_to_path(const Line& ray, int remaining, double refraction_index, int thread_num, Path* path){
     //cout<<remaining<<endl;
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
@@ -190,18 +190,35 @@ Trace_return trace(const Line& ray, int remaining, double refraction_index, int 
     Material mat = {Color(),0,Color(),Color(),0};
     Vector normal;
     get_intersection(ray,&mat,&normal,&p);
-    if (mat.is_light) c = mat.ref;
-    if (p.is_valid() && (!mat.is_light)){
+    if (mat.is_light){
+	path->add(p,Vector(), Vector(), mat, true);
+	return;
+    }
+    else if (p.is_valid()){
+	Line ref = ray;
+	ref.reflect(p,normal);
+	ref.direction = -1*ref.direction;
+	path->add(p,normal,ref.direction,mat,true);
+	for(int i = 0; i<num_objs; i++){
+	    if (objs[i]->is_light){
+		Point rp = objs[i]->rand_point(generators[thread_num]);
+		path->add(rp,Vector(),Vector(),objs[i]->get_material(rp),true);
+		break;
+	    }
+	}
+	/*
 	if (fabs(mat.refraction_index-refraction_index) < 0.0001){ // leaving
 	    c = Color(0,0,0);
 	}
 	else// entering
-	    c = /*get_direct_radiance(ray,p,normal,mat,thread_num) +*/ get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
+	    c = get_indirect_reflection(ray,p,normal,mat,remaining,refraction_index,thread_num);
 	c = c + (get_refraction(ray,p,normal,mat,remaining,refraction_index,thread_num));
-	if (remaining == 0) c = c + get_direct_radiance(ray,p,normal,mat,thread_num);
+	if (remaining == 0) c = c + get_direct_radiance(ray,p,normal,mat,thread_num);*/
     }
-    //if (remaining == 0) c = c + get_direct_radiance(ray,p,normal,mat,thread_num);
-    return {c,p};
+    else {
+	path->add(p,Vector(),Vector(),mat, true);
+	return;
+    }
 }
 
 void blur(Color* colors, int radius, double stddev){
@@ -274,7 +291,9 @@ void do_rays_i(Color* img, int num){
 		D.normalize();
 		Point C = camera+focal_length*D;
 		Line ray = Line(camera+lens_shift, C);
-		c = c + trace(ray, ray_depth, 1, num).color;
+		Path path(camera+lens_shift);
+		add_to_path(ray,1,1,num,&path);
+		c = c+ path.trace();
 	    }
 	    c = c/pixel_samples;
 	    img[y*width+x]=c;

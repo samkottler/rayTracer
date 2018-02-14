@@ -175,3 +175,60 @@ Point Face::rand_point(default_random_engine& gen) const{
     double r2 = (double)gen()/gen.max();
     return verts[1] + v1*r1 + v2*r2;
 }
+
+Path::Path(const Point& start){
+    head = new path_node;
+    head->point = start;
+    head->next = nullptr;
+}
+Color Path::trace(){
+    path_node* current = head->next;
+    Color c = head->mat.ref;
+    //cout << head->point - Point()<<endl;
+    //cout << c.r << " " << c.g << " " << c.b<<endl;
+    Vector to_next = (head->point - current->point).normalize();
+    while (current->next){
+	Material mat = current->mat;
+	Color diffuse;
+	Color specular;
+	double specular_exp;
+	if (current->reflection){
+	    diffuse = mat.diffuse;
+	    specular = mat.specular;
+	    specular_exp = mat.specular_exp;
+	}
+	else{
+	    diffuse = mat.refraction_diffuse;
+	    specular = mat.refraction_specular;
+	    specular_exp = mat.refraction_specular_exp;
+	}
+	double s = pow(current->comparison.dot(to_next),specular_exp);
+	double d = current->normal.dot(to_next);
+	if (s<0) s=0;
+	if (d<0) d=0;
+	c = c*(diffuse*d + specular*s);
+	//cout<< s<< " " << d<<endl;
+	//cout << c.r << " " << c.g << " " << c.b<<endl;
+	to_next = (current->point - current->next->point).normalize();
+	current = current->next;
+    }
+    return c;
+}
+void Path::add(const Point p, const Vector normal, const Vector comparison, const Material mat, bool reflect){
+    path_node* new_node = new path_node;
+    new_node->next = head;
+    new_node->point = p;
+    new_node->normal = normal;
+    new_node->comparison = comparison;
+    new_node->mat = mat;
+    new_node->reflection = reflect;
+    head = new_node;
+}
+Path::~Path(){
+    path_node* current = head;
+    while (current->next){
+	path_node* next = current->next;
+	delete current;
+	current = next;
+    }
+}
