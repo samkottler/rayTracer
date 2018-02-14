@@ -102,6 +102,14 @@ void add_to_path(const Line& ray, int remaining, double refraction_index, int th
 	    for(int i = 0; i<num_objs; i++){
 		if (objs[i]->is_light){
 		    Point rp = objs[i]->rand_point(generators[thread_num]);
+		    for(int j = 0; j < num_objs; j++){
+			if (i==j) continue;
+			Point point = objs[j]->intersect(ray);
+			if (point.is_valid() && (point-p).length()<(rp-p).length()){
+			    path->add(Point(INFINITY,INFINITY,INFINITY),Vector(),Vector(),mat, true);
+			    return;
+			}
+		    }
 		    path->add(rp,Vector(),Vector(),objs[i]->get_material(rp),true);
 		    return;
 		}
