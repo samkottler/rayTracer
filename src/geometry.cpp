@@ -63,6 +63,8 @@ Vector Point::operator- (const Point& other) const{
     return v;
 }
 
+Line::Line(){
+}
 Line::Line(const Point& p, const Vector& d){
     point = p;
     direction = d;
@@ -184,31 +186,30 @@ Path::Path(const Point& start){
 Color Path::trace(){
     path_node* current = head->next;
     Color c = head->mat.ref;
-    //cout << head->point - Point()<<endl;
-    //cout << c.r << " " << c.g << " " << c.b<<endl;
+    if (!head->point.is_valid()) return Color(0,0,0);
     Vector to_next = (head->point - current->point).normalize();
     while (current->next){
 	Material mat = current->mat;
 	Color diffuse;
 	Color specular;
 	double specular_exp;
+	double s;
 	if (current->reflection){
 	    diffuse = mat.diffuse;
 	    specular = mat.specular;
 	    specular_exp = mat.specular_exp;
+	    s = pow(current->comparison.dot(to_next),specular_exp);
 	}
 	else{
 	    diffuse = mat.refraction_diffuse;
 	    specular = mat.refraction_specular;
-	    specular_exp = mat.refraction_specular_exp;
+	    s = 1;
 	}
-	double s = pow(current->comparison.dot(to_next),specular_exp);
+	//double s = pow(current->comparison.dot(to_next),specular_exp);
 	double d = current->normal.dot(to_next);
 	if (s<0) s=0;
 	if (d<0) d=0;
 	c = c*(diffuse*d + specular*s);
-	//cout<< s<< " " << d<<endl;
-	//cout << c.r << " " << c.g << " " << c.b<<endl;
 	to_next = (current->point - current->next->point).normalize();
 	current = current->next;
     }

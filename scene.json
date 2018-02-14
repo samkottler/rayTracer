@@ -1,11 +1,11 @@
 {
-    "num_threads": 1,
-    "num_objs": 6,
+    "num_threads": 4,
+    "num_objs": 8,
     "-ambient": [0.529411,0.807843,0.921568],
     "ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 1000,
+    "pixel_samples": 100,
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 3,
@@ -82,12 +82,12 @@
     "shape": "face",
     "is_light": true,
     "normal": [0,-1,0],
-    "verts": [[-7,20,-27],[7,20,-27],[7,20,-13],[-7,20,-13]],
-    "color": [1,1,1]
+    "verts": [[-20,20,-40],[20,20,-40],[20,20,0],[-20,20,0]],
+    "color": [3,3,3]
 }
 {
     "shape": "sphere",
-    "center": [0,-14,-20],
+    "center": [-10,-14,-30],
     "radius": 6,
     "is_light": false,
     "color": [0.7,0.7,0.7],
@@ -108,7 +108,7 @@
     "is_light": false,
     "color": [0.7,0.7,0.7],
     "diffuse": [0,0,0],
-    "specular": [0.1,0.1,0.1],
+    "specular": [1,1,1],
     "specular_exp": 100,
     "refraction_index": 1.5,
     "refraction_diffuse": [0,0,0],

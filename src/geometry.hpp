@@ -41,6 +41,7 @@ class Line{
 public:
     Point point;
     Vector direction;
+    Line();
     Line(const Point& p, const Vector& d);
     Line(const Point& p0, const Point& p1);
     Line& reflect(const Point& pNew, const Vector& normal);
