@@ -5,15 +5,15 @@
     "ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 1000,
+    "pixel_samples": 10000,
     "shadow_samples": 1,
     "scatter_samples": 1,
     "ray_depth": 3,
-    "scale": 5,
-    "width": 200,
-    "height": 200,
-    "lens_radius": 0,
-    "focal_length": 13,
+    "scale": 10,
+    "width": 400,
+    "height": 400,
+    "lens_radius": 1,
+    "focal_length": 60,
     "distance_scale": 4
 }
 {
@@ -83,7 +83,7 @@
     "is_light": true,
     "normal": [0,-1,0],
     "verts": [[-20,20,-40],[20,20,-40],[20,20,0],[-20,20,0]],
-    "color": [3,3,3]
+    "color": [5,5,5]
 }
 {
     "shape": "sphere",

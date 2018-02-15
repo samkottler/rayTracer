@@ -227,7 +227,7 @@ void Path::add(const Point p, const Vector normal, const Vector comparison, cons
 }
 Path::~Path(){
     path_node* current = head;
-    while (current->next){
+    while (current){
 	path_node* next = current->next;
 	delete current;
 	current = next;
