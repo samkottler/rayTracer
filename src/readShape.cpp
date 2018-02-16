@@ -55,12 +55,11 @@ vector<Solid*>* read_json_scene(string filename){
 	    }
 	    else{
 		s->is_light = false;
-		json rc = obj["reflect_color"];
 		json diffuse = obj["diffuse"];
 		json specular = obj["specular"];
 		json rdiffuse = obj["refraction_diffuse"];
 		json rspecular = obj["refraction_specular"];
-		s->material = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(rdiffuse[0], rdiffuse[1], rdiffuse[2]), Color(rspecular[0], rspecular[1], rspecular[2]), obj["refraction_specular_exp"], obj["refraction_index"]};
+		s->material = {Color(),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(rdiffuse[0], rdiffuse[1], rdiffuse[2]), Color(rspecular[0], rspecular[1], rspecular[2]), obj["refraction_specular_exp"], obj["refraction_index"]};
 	    }
 	    objs->push_back(s);
 	}
@@ -73,14 +72,13 @@ vector<Solid*>* read_json_scene(string filename){
 	    Plane* pl = new Plane(Point(p[0],p[1],p[2]),norm);
 	    if (obj["is_light"]) pl->material1 = pl->material2 = {Color(),true,Color(),Color(),0, Color(),Color(), 0,0};
 	    else{
-		json rc = obj["reflect_color"];
 		json diffuse = obj["diffuse1"];
 		json specular = obj["specular1"];
 		pl->is_light = false;
-		pl->material1 = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		pl->material1 = {Color(),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 		diffuse = obj["diffuse2"];
 		specular = obj["specular2"];
-		pl->material2 = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		pl->material2 = {Color(),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 	    }
 	    objs->push_back(pl);
 	}
@@ -104,11 +102,10 @@ vector<Solid*>* read_json_scene(string filename){
 		f->material = {Color(c[0],c[1],c[2]), true, Color(), Color(), 0, Color(), Color(), 0,0};
 	    }
 	    else{
-		json rc = obj["reflect_color"];
 		json diffuse = obj["diffuse"];
 		json specular = obj["specular"];
 		f->is_light = false;
-		f->material = {Color(rc[0],rc[1],rc[2]),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		f->material = {Color(),false, Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 	    }
 	    objs->push_back(f);
 	}
