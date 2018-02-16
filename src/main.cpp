@@ -44,31 +44,39 @@ void get_intersection(const Line& ray, Material* mat, Vector* normal, Point* p){
 
 //returns a random ray in the hemisphere around point p with with some normal
 //Generates a ray in hemisphere around <0,0,1> and rotates it to proper hemisphere
-Line get_reflection_ray(const Point& p, const Vector& normal, int thread_num){
-    Line new_ray(p,Vector());
-    double theta = acos(normal[2]); //angle between normal and <0,0,1>
-    Vector n;
-    n[0]=0;n[1]=0;n[2]=1;
-    n=n.cross(normal); // n is the axis of rotation
-    n.normalize();
-    double sint = sin(theta);
-    double cost = cos(theta);
-    Vector v;
-    //the first random variable should be between 0-1 to avoid picking a cosine weighted vector
-    double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
-    double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
-    double sin_rand = sqrt(1-u_rand*u_rand);
-    v[0] = sin_rand*cos(phi_rand);
-    v[1] = sin_rand*sin(phi_rand);
-    v[2] = u_rand;
-    if (fabs(normal[2] - 1) < 0.0001){
-	new_ray.direction = v;
+Line get_reflection_ray(const Line& ray, const Point& p, const Vector& normal, double gloss, int thread_num){
+    if(generators[thread_num]() < gloss*generators[thread_num].max()){
+	Line ref = ray;
+	ref.reflect(p,normal);
+	ref.direction = ref.direction*-1;
+	return ref;
     }
     else{
-	//rotate the vector to be in correct hemisphere
-	new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
+	Line new_ray(p,Vector());
+	double theta = acos(normal[2]); //angle between normal and <0,0,1>
+	Vector n;
+	n[0]=0;n[1]=0;n[2]=1;
+	n=n.cross(normal); // n is the axis of rotation
+	n.normalize();
+	double sint = sin(theta);
+	double cost = cos(theta);
+	Vector v;
+	//the first random variable should be between 0-1 to avoid picking a cosine weighted vector
+	double u_rand = (double)generators[thread_num]()/generators[thread_num].max();
+	double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+	double sin_rand = sqrt(1-u_rand*u_rand);
+	v[0] = sin_rand*cos(phi_rand);
+	v[1] = sin_rand*sin(phi_rand);
+	v[2] = u_rand;
+	if (fabs(normal[2] - 1) < 0.0001){
+	    new_ray.direction = v;
+	}
+	else{
+	    //rotate the vector to be in correct hemisphere
+	    new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
+	}
+	return new_ray;
     }
-    return new_ray;
 }			      
 
 //returns a perfectly specular refraction ray
@@ -94,7 +102,7 @@ Line get_refraction_ray(const Line& ray, const Point& p, const Vector& normal, c
 void add_to_path(const Line& ray, int remaining, double refraction_index, int thread_num, Path* path){
     num_rays[thread_num]++;
     Point p(INFINITY,INFINITY,INFINITY);
-    Material mat = {Color(),0,Color(),Color(),0};
+    Material mat = {Color(),0,0,Color(),Color(),0};
     Vector normal;
     get_intersection(ray,&mat,&normal,&p);
     if (mat.is_light){
@@ -129,8 +137,8 @@ void add_to_path(const Line& ray, int remaining, double refraction_index, int th
 	}
 	else{ // entering
 	    //if object isn't at all transparent, don't refract
-	    if (mat.refraction_index == 0){
-		forward = get_reflection_ray(p,normal,thread_num);
+	    if (mat.refraction_index == 0 || generators[thread_num]()<generators[thread_num].max()/2){
+		forward = get_reflection_ray(ray,p,normal,mat.gloss,thread_num);
 		reflect = true;
 	    }
 	    else{

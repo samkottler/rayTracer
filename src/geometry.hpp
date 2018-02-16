@@ -18,6 +18,7 @@ public:
 struct Material{
     Color ref;
     bool is_light;
+    double gloss;
     Color diffuse;
     Color specular;
     double specular_exp;
