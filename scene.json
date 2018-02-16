@@ -1,20 +1,15 @@
 {
-    "num_threads": 4,
+    "num_threads": 1,
     "num_objs": 8,
-    "-ambient": [0.529411,0.807843,0.921568],
-    "ambient": [0,0,0],
     "exposure": 1,
     "num_blurs": 3,
-    "pixel_samples": 10000,
-    "shadow_samples": 1,
-    "scatter_samples": 1,
-    "ray_depth": 3,
-    "scale": 10,
-    "width": 400,
-    "height": 400,
+    "paths_per_pixel": 100,
+    "max_ray_depth": 3,
+    "scale": 5,
+    "width": 200,
+    "height": 200,
     "lens_radius": 1,
-    "focal_length": 60,
-    "distance_scale": 4
+    "focal_length": 60
 }
 {
     "shape": "plane",
