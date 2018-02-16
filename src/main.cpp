@@ -292,5 +292,9 @@ int main(int argc, char** argv){
     cout << "Rays: " <<defaultfloat<< (double)rays << endl;
     expose(img, colors);
     writeImage((char*)"test.png", width, height, img);
+    delete[] num_rays;
+    delete[] generators;
+    delete[] img;
+    delete[] colors;
     return 0;
 }
