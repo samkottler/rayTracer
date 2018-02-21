@@ -44,12 +44,36 @@ void get_intersection(const Line& ray, Material* mat, Vector* normal, Point* p){
 
 //returns a random ray in the hemisphere around point p with with some normal
 //Generates a ray in hemisphere around <0,0,1> and rotates it to proper hemisphere
-Line get_reflection_ray(const Line& ray, const Point& p, const Vector& normal, double gloss, int thread_num){
-    if(generators[thread_num]() < gloss*generators[thread_num].max()){
-	Line ref = ray;
-	ref.reflect(p,normal);
-	ref.direction = ref.direction*-1;
-	return ref;
+Line get_reflection_ray(const Line& ray, const Point& p, const Vector& normal, const Material& mat, int thread_num){
+    if(generators[thread_num]() < mat.gloss*generators[thread_num].max()){
+	Line perfect_ref = ray;
+	perfect_ref.reflect(p,normal);
+	perfect_ref.direction = perfect_ref.direction*-1;
+	Line new_ray(p,Vector());
+	double theta = acos(perfect_ref.direction[2]); //angle between perfect reflection and <0,0,1>
+	Vector n;
+	n[0]=0;n[1]=0;n[2]=1;
+	n=n.cross(perfect_ref.direction); // n is the axis of rotation
+	n.normalize();
+	double sint = sin(theta);
+	double cost = cos(theta);
+	Vector v;
+	while (true){
+	    double u_rand = pow(cos((double)generators[thread_num]()/generators[thread_num].max()*M_PI/2),1.0/mat.specular_exp);
+	    double phi_rand = (double)generators[thread_num]()/generators[thread_num].max()*2*M_PI;
+	    double sin_rand = sqrt(1-u_rand*u_rand);
+	    v[0] = sin_rand*cos(phi_rand);
+	    v[1] = sin_rand*sin(phi_rand);
+	    v[2] = u_rand;
+	    if (fabs(normal[2] - 1) < 0.0001){
+		new_ray.direction = v;
+	    }
+	    else{
+		//rotate the vector to be in correct direction
+		new_ray.direction = cost*(v-n*(n.dot(v))) + n*(n.dot(v)) + sint*n.cross(v);
+	    }
+	    if (new_ray.direction.dot(normal)>=0) return new_ray;
+	}
     }
     else{
 	Line new_ray(p,Vector());
@@ -138,7 +162,7 @@ void add_to_path(const Line& ray, int remaining, double refraction_index, int th
 	else{ // entering
 	    //if object isn't at all transparent, don't refract
 	    if (mat.refraction_index == 0 || generators[thread_num]()<generators[thread_num].max()/2){
-		forward = get_reflection_ray(ray,p,normal,mat.gloss,thread_num);
+		forward = get_reflection_ray(ray,p,normal,mat,thread_num);
 		reflect = true;
 	    }
 	    else{

@@ -59,7 +59,9 @@ vector<Solid*>* read_json_scene(string filename){
 		json specular = obj["specular"];
 		json rdiffuse = obj["refraction_diffuse"];
 		json rspecular = obj["refraction_specular"];
-		s->material = {Color(),false,obj["gloss"], Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(rdiffuse[0], rdiffuse[1], rdiffuse[2]), Color(rspecular[0], rspecular[1], rspecular[2]), obj["refraction_specular_exp"], obj["refraction_index"]};
+		double diff = diffuse[0].get<double>() + diffuse[1].get<double>() + diffuse[2].get<double>();
+		double spec = specular[0].get<double>() + specular[1].get<double>() + specular[2].get<double>();
+		s->material = {Color(),false,spec/(diff+spec), Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(rdiffuse[0], rdiffuse[1], rdiffuse[2]), Color(rspecular[0], rspecular[1], rspecular[2]), obj["refraction_specular_exp"], obj["refraction_index"]};
 	    }
 	    objs->push_back(s);
 	}
@@ -74,11 +76,15 @@ vector<Solid*>* read_json_scene(string filename){
 	    else{
 		json diffuse = obj["diffuse1"];
 		json specular = obj["specular1"];
+		double diff = diffuse[0].get<double>() + diffuse[1].get<double>() + diffuse[2].get<double>();
+		double spec = specular[0].get<double>() + specular[1].get<double>() + specular[2].get<double>();
 		pl->is_light = false;
-		pl->material1 = {Color(),false, obj["gloss"],Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		pl->material1 = {Color(),false, spec/(diff+spec),Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 		diffuse = obj["diffuse2"];
 		specular = obj["specular2"];
-		pl->material2 = {Color(),false, obj["gloss"],Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		diff = diffuse[0].get<double>() + diffuse[1].get<double>() + diffuse[2].get<double>();
+		spec = specular[0].get<double>() + specular[1].get<double>() + specular[2].get<double>();
+		pl->material2 = {Color(),false, spec/(diff+spec),Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 	    }
 	    objs->push_back(pl);
 	}
@@ -104,8 +110,10 @@ vector<Solid*>* read_json_scene(string filename){
 	    else{
 		json diffuse = obj["diffuse"];
 		json specular = obj["specular"];
+		double diff = diffuse[0].get<double>() + diffuse[1].get<double>() + diffuse[2].get<double>();
+		double spec = specular[0].get<double>() + specular[1].get<double>() + specular[2].get<double>();
 		f->is_light = false;
-		f->material = {Color(),false, obj["gloss"],Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
+		f->material = {Color(),false, spec/(diff+spec),Color(diffuse[0], diffuse[1], diffuse[2]), Color(specular[0], specular[1], specular[2]), obj["specular_exp"], Color(), Color(), 0, 0};
 	    }
 	    objs->push_back(f);
 	}
