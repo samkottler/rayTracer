@@ -1,6 +1,6 @@
 CC = gcc
 CXX = g++
-FLAGS = -Wall -O3 -flto
+FLAGS = -Wall -O3 -flto -fopenmp
 CFLAGS = -std=gnu11
 CXXFLAGS = -std=gnu++11
 CLIBS = -lm -lpng -lpthread

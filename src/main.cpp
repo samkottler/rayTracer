@@ -206,6 +206,7 @@ void blur(Color* colors, int radius, double stddev){
     //apply the gaussian blur several times
     for (int i = 1; i< 1+num_blurs; i++){
 	blurs[i] = new Color[width*height];
+	#pragma omp parallel for
 	for (int y = 0; y<height; y++){
 	    for(int x = 0; x<width; x++){
 		Color c;
@@ -310,6 +311,7 @@ int main(int argc, char** argv){
     for(int i = 1; i<num_threads; i++){
 	threads[i-1].join();
     }
+    expose(img, colors);
     auto end = chrono::system_clock::now();
     cout << endl;
     chrono::duration<double> elapsed = end-start;
@@ -322,7 +324,6 @@ int main(int argc, char** argv){
     }
     cout << "Time: " << min << "m" << sec << "s" << endl;
     cout << "Rays: " <<defaultfloat<< (double)rays << endl;
-    expose(img, colors);
     writeImage((char*)"test.png", width, height, img);
     delete[] num_rays;
     delete[] generators;

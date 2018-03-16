@@ -3,7 +3,7 @@
     "num_objs": 8,
     "exposure": 1,
     "num_blurs": 3,
-    "paths_per_pixel": 10000,
+    "paths_per_pixel": 10,
     "max_ray_depth": 3,
     "scale": 10,
     "width": 400,
